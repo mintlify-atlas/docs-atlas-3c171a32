@@ -1,0 +1,65 @@
+---
+title: "features.fea: OpenType Feature Definitions"
+sidebarTitle: "features.fea"
+description: "Reference for features.fea, the optional plain-text UTF-8 file storing OpenType feature code in Adobe AFDKO FEA syntax within a UFO package."
+---
+
+The `features.fea` file contains OpenType feature definitions for a UFO font. Unlike the other data files in a UFO package, this file is **plain text** — not an XML Property List. It is **optional**; if the file is not present in the UFO, the font contains no feature data.
+
+## File Format
+
+The file must be a plain text file encoded as **UTF-8**. It stores feature code written in [AFDKO FEA syntax](https://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html) — the Adobe OpenType Feature File Specification used throughout the font industry for describing OpenType layout features, glyph substitutions, positioning rules, and more.
+
+<Note>
+  Any `include()` statements in the feature file must use paths **relative to the UFO package root**, not relative to the `features.fea` file itself.
+</Note>
+
+## Self-Contained Requirement
+
+If a `features.fea` file is present, it must be **self-contained**. Any glyph classes, mark classes, or lookup definitions referenced within the file must be defined within the same file. No external references may be assumed to exist.
+
+Authoring tools should not assume that the feature file syntax is valid. The specification makes no requirement about the syntactic correctness of the content — tools must be tolerant of potentially invalid feature code.
+
+## Relationship to Other UFO Files
+
+The feature file may contain data that **duplicates or conflicts** with data in other parts of the UFO:
+
+<CardGroup cols={3}>
+  <Card title="kerning.plist" icon="arrows-left-right">
+    The feature file may include a kern feature that overlaps with or differs from the kerning data stored in `kerning.plist`.
+  </Card>
+  <Card title="groups.plist" icon="layer-group">
+    Glyph classes defined in the feature file may parallel or conflict with groups defined in `groups.plist`.
+  </Card>
+  <Card title="fontinfo.plist" icon="circle-info">
+    Name table or other font-level data in the feature file may duplicate entries from `fontinfo.plist`.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Synchronization between `features.fea` and other UFO data files is **not required** by the specification. Keeping these files consistent is the responsibility of the user and application developer.
+</Warning>
+
+## Example
+
+The following example demonstrates a typical `features.fea` file defining a glyph class and a standard ligature substitution feature:
+
+```fea
+@myClass = [a b c];
+
+feature liga {
+  sub f i by fi;
+  sub f l by fl;
+} liga;
+```
+
+This file defines:
+- A glyph class `@myClass` containing glyphs `a`, `b`, and `c`.
+- A `liga` (standard ligatures) feature substituting the sequences `f i` and `f l` with the ligature glyphs `fi` and `fl`.
+
+## Further Reading
+
+Full documentation for the feature file syntax is provided by the Adobe AFDKO project:
+
+- [AFDKO OpenType Feature File Specification](https://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html)
+- [Adobe Font Development Kit for OpenType (AFDKO)](https://github.com/adobe-type-tools/afdko/)

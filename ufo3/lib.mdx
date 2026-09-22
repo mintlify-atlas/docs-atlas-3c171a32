@@ -1,0 +1,132 @@
+---
+title: "lib.plist: Custom Data Storage with Reverse-Domain Keys"
+sidebarTitle: "lib.plist"
+description: "Reference for lib.plist, which stores arbitrary authoring-tool or user-specific font data using reverse-domain name keys, including the public.glyphOrder standard."
+---
+
+The `lib.plist` file is a general-purpose data store for arbitrary, authoring-tool-specific, user-specific, or otherwise custom data associated with a UFO font. It is an XML Property List and is **optional**; if absent, the font contains no lib data. When font data is too complex or too large to store in the lib, it should instead be placed in the UFO's `data` directory.
+
+## File Format
+
+The property list data consists of a **dictionary at the top level**. Keys are strings and values may be any valid property list type. To prevent key conflicts between different tools and vendors, **top-level keys should follow a [reverse-domain naming scheme](https://en.wikipedia.org/wiki/Reverse_domain_name_notation)** — for example, `com.mycompany.myTool.someData`.
+
+The pattern `public.*` (where `*` is one or more characters) is **reserved** for standardized lib keys defined by the UFO specification. It is recommended that values be kept as shallow as possible.
+
+<Note>
+  The lib is intended for storing small, structured data. For larger binary or complex assets, use the `data` directory within the UFO package.
+</Note>
+
+---
+
+## Standardized Public Keys
+
+The following `public.*` keys are registered by the UFO specification and map to commonly needed font-authoring functionality.
+
+### public.glyphOrder
+
+<ParamField path="public.glyphOrder" type="list of strings">
+  The user's preferred glyph order for the font. Authoring tools may use this order when displaying glyphs or setting glyph order in compiled binaries, but are not required to do so. This data is optional.
+
+  - Glyph names must not occur more than once in the list.
+  - The list may contain glyph names not present in the font.
+  - Glyphs in the font may not appear in the list.
+</ParamField>
+
+### public.groupOrder
+
+<ParamField path="public.groupOrder" type="list of strings">
+  The user's preferred group display order. Authoring tools may use this for UI presentation. Group names must not occur more than once. The list may reference groups not present in the font.
+</ParamField>
+
+### public.openTypeMeta
+
+<ParamField path="public.openTypeMeta" type="dictionary">
+  Represents the OpenType `meta` table, keyed by four-character tag. Registered tags `appl` and `bild` store values as data; `dlng` and `slng` store values as arrays of ScriptLangTag strings (authoring tools should serialize these as comma-separated strings). Private tags must store values as data or string. Optional.
+</ParamField>
+
+### public.openTypeCategories
+
+<ParamField path="public.openTypeCategories" type="dictionary">
+  Maps glyph names to their OpenType GDEF glyph class category. Both keys and values must be strings. Valid values are `unassigned`, `base`, `mark`, `ligature`, or `component`. Optional. The dictionary may be partial — glyphs not listed may be assigned to any class by the authoring tool.
+</ParamField>
+
+### public.openTypeHeadModified
+
+<ParamField path="public.openTypeHeadModified" type="string">
+  A date string in the format `"YYYY/MM/DD HH:MM:SS"` (UTC) that authoring tools may use to set the `modified` field in the OpenType `head` table.
+</ParamField>
+
+### public.openTypePostUnderlinePosition
+
+<ParamField path="public.openTypePostUnderlinePosition" type="integer">
+  Underline position defined as the top of the underline from the baseline, per the OpenType `post` table definition. When present, this value should be used for the `post` table `underlinePosition`. If `postscriptUnderlinePosition` is also present, the PostScript value takes precedence for Type 1 and CFF output.
+</ParamField>
+
+### public.postscriptNames
+
+<ParamField path="public.postscriptNames" type="dictionary">
+  Maps UFO glyph names to preferred PostScript glyph names. Both keys and values must be strings conforming to the PostScript glyph naming specification. Partial coverage is allowed; unlisted glyphs use their UFO glyph name as the PostScript name. Optional.
+</ParamField>
+
+### public.truetype.instructions
+
+<ParamField path="public.truetype.instructions" type="dictionary">
+  Provides TrueType hinting data. The `formatVersion` key must be set to `"1"`. Additional optional keys include `controlValue` (dict of CVT entries), `controlValueProgram` (string), `fontProgram` (string), and several `maxp` table values (`maxFunctionDefs`, `maxInstructionDefs`, `maxStackElements`, `maxStorage`, `maxSizeOfInstructions`, `maxTwilightPoints`, `maxZones`). Optional.
+</ParamField>
+
+### public.skipExportGlyphs
+
+<ParamField path="public.skipExportGlyphs" type="list of strings">
+  A list of glyph names that should not be exported to the final compiled font. When present, the UFO compiler must decompose these glyphs wherever they appear as components, remove them before compilation, prune all groups and kerning pairs that reference them, and leave the source UFO unmodified on disk. Glyph names must not occur more than once. Optional.
+</ParamField>
+
+### public.unicodeVariationSequences
+
+<ParamField path="public.unicodeVariationSequences" type="dictionary">
+  Defines Unicode Variation Sequences. Keys are Variation Selector code points as hexadecimal strings; values are dictionaries mapping base character code points (hex strings) to glyph names. Used to generate the OpenType cmap subtable format 14. Optional.
+</ParamField>
+
+### public.objectLibs
+
+<ParamField path="public.objectLibs" type="dictionary">
+  Object-level lib data for individual guidelines defined in `fontinfo.plist`. Keys are guideline identifiers; values are dictionaries following the reverse-domain key convention. Keys that do not correspond to a guideline identifier in `fontinfo.plist` may be discarded. Optional.
+</ParamField>
+
+---
+
+## Custom Keys
+
+Any data not covered by the standard public keys should be stored under a **reverse-domain name key** unique to the tool or organization. For example:
+
+```xml
+<key>org.robofab.scripts.SomeData</key>
+<string>Hello World.</string>
+```
+
+This ensures that multiple tools can store data in the same `lib.plist` without key collisions.
+
+---
+
+## Example
+
+The following example shows a complete `lib.plist` containing the standard `public.glyphOrder` key alongside a custom tool-specific key:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>org.robofab.scripts.SomeData</key>
+  <string>Hello World.</string>
+  <key>public.glyphOrder</key>
+  <array>
+    <string>A</string>
+    <string>C</string>
+    <string>B</string>
+  </array>
+</dict>
+</plist>
+```
+
+In this example, `public.glyphOrder` declares the designer's preferred glyph ordering (`A`, `C`, `B`). The `org.robofab.scripts.SomeData` key stores arbitrary data scoped to the `org.robofab` domain, ensuring it will never conflict with keys from other tools.

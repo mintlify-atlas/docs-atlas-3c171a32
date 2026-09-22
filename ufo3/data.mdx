@@ -1,0 +1,87 @@
+---
+title: "Data Directory: Arbitrary Custom Data Storage"
+sidebarTitle: "Data"
+description: "The data directory stores binary or structured custom data that is too complex or too large for lib.plist, organized under reverse-domain-named top-level entries."
+---
+
+The `data` directory gives authoring tools a safe, well-defined location to store application-specific data that cannot fit into a property list. When the data a tool needs to persist is too large, too deeply nested, or simply not serializable as a plist value, the `data` directory is the right place for it. Both individual files and subdirectory trees are permitted here, giving tools complete freedom over how they organize their own private storage.
+
+<Note>
+The `data` directory was introduced in UFO 3. UFO 1 and UFO 2 packages do not include this directory.
+</Note>
+
+## When to Use `data` vs. `lib.plist`
+
+<CardGroup cols={2}>
+  <Card title="Use lib.plist when…" icon="list">
+    The data can be serialized as a property list value — dictionaries, arrays, strings, numbers, booleans, or data blobs — and the quantity is modest. `lib.plist` (and the `lib` element inside GLIF files) is designed for exactly this kind of lightweight, structured metadata.
+  </Card>
+  <Card title="Use data/ when…" icon="folder-open">
+    The data is too complex, too large, or not representable as a plist. Binary assets, large source files, tool-specific databases, and multi-file trees all belong here instead of in `lib.plist`.
+  </Card>
+</CardGroup>
+
+## Directory Rules
+
+<Steps>
+  <Step title="Top-level entries use reverse-domain names">
+    Every file or directory at the top level of `data` must be named following the [reverse domain naming scheme](/ufo3/conventions#reverse-domain-naming-schemes) — the same convention used for keys in `lib.plist`. For example, a tool whose domain is `sometool.com` would use a top-level entry named `com.sometool`.
+  </Step>
+  <Step title="Reserve public.* for standardized names">
+    The pattern `public.*` (where `*` is one or more characters) is reserved for names standardized by the UFO specification. Authoring tools must not create top-level entries starting with `public.` for their own private data.
+  </Step>
+  <Step title="Respect other tools' sections">
+    Each authoring tool owns its own top-level entry (and everything beneath it). Tools must not delete or modify sections belonging to other tools unless they have been explicitly given permission to do so.
+  </Step>
+  <Step title="No symlinks anywhere">
+    Symbolic links are not allowed anywhere inside the `data` directory or its subdirectories.
+  </Step>
+  <Step title="No empty directories">
+    Empty directories are not allowed inside `data` or its subdirectories. As an exception, authoring tools may remove empty directories even when those directories do not belong to them.
+  </Step>
+</Steps>
+
+## Reverse-Domain Naming
+
+The reverse-domain convention prevents name collisions between different tools storing data in the same UFO. To construct a key, reverse the relevant Internet domain name and append a descriptive identifier. For example:
+
+| Internet domain | Reverse-domain prefix | Example entry |
+|---|---|---|
+| `sometool.com` | `com.sometool` | `com.sometool/` |
+| `somefoundry.org` | `org.somefoundry` | `org.somefoundry.production/` |
+| `unifiedfontobject.org` | `org.unifiedfontobject` | `org.unifiedfontobject.featureData` |
+
+<Tip>
+Further specificity can be added after the domain prefix to distinguish between multiple data sets from the same tool. For example, `com.sometool.glyphImages` and `com.sometool.hintingData` can coexist at the top level without conflict.
+</Tip>
+
+## Example: Per-Glyph Source Images
+
+The [Extensions](/extensions) page illustrates a tool that composes each glyph from multiple Photoshop source images. The data directory structure for such a tool might look like this:
+
+```
+data/
+└── com.sometool.glyphImages/
+    ├── A/
+    │   ├── image1.psd
+    │   ├── image2.psd
+    │   └── image3.psd
+    └── B/
+        ├── image1.psd
+        └── image2.psd
+```
+
+The top-level directory `com.sometool.glyphImages` is owned exclusively by that tool. Other tools reading the UFO will leave it untouched.
+
+## What Can Be Stored Here
+
+Because the internal structure of a tool's section is entirely up to that tool, the `data` directory can hold virtually anything:
+
+- **Binary assets** — rasterized artwork, font proofs, or source PSDs referenced during production
+- **Large structured data** — tool databases or caches too large to embed in a plist
+- **Multi-file trees** — hierarchies of per-glyph or per-layer files that mirror the font structure
+- **Non-plist formats** — JSON, CSV, SQLite databases, or any other format a tool relies on
+
+<Info>
+For a complete overview of the storage strategy — including when to use libs, when to use the data directory, and how the reverse-domain key system prevents collisions — see the [Extensions](/extensions) page.
+</Info>

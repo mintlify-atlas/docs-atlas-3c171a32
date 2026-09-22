@@ -1,0 +1,551 @@
+---
+title: "UFO 2 fontinfo.plist: Font Metadata Specification"
+sidebarTitle: "fontinfo.plist"
+description: "Complete UFO 2 fontinfo.plist reference — redesigned key structure covering identification, legal, dimensions, OpenType tables, PostScript, and FOND data."
+---
+
+The `fontinfo.plist` file is an XML property list that stores metadata about a font: its name, dimensions, legal information, OpenType table values, PostScript-specific settings, and Macintosh FOND resource data. This file is **optional** — not all keys are required, and the file may be omitted entirely if no font-level metadata needs to be recorded. All values are stored in a flat top-level dictionary.
+
+<Note>
+  The `fontinfo.plist` structure was completely redesigned for UFO 2. Keys are now tagged by format or OpenType table (e.g., `openTypeHheaAscender`). Data shared across multiple formats uses generic unprefixed keys (e.g., `familyName`). See the [conversion table](#converting-fontinfoplist-from-ufo-1-to-ufo-2) at the bottom of this page for a mapping from UFO 1 keys to UFO 2 keys.
+</Note>
+
+**File format:** XML Property List
+
+## Generic Identification Information
+
+These keys hold identification data that is not specific to any single output format or OpenType table.
+
+<ParamField body="familyName" type="string">
+  Family name.
+</ParamField>
+
+<ParamField body="styleName" type="string">
+  Style name.
+</ParamField>
+
+<ParamField body="styleMapFamilyName" type="string">
+  Family name used for bold, italic and bold italic style mapping.
+</ParamField>
+
+<ParamField body="styleMapStyleName" type="string">
+  Style map style. The possible values are `regular`, `italic`, `bold` and `bold italic`. These are case sensitive.
+</ParamField>
+
+<ParamField body="versionMajor" type="integer">
+  Major version.
+</ParamField>
+
+<ParamField body="versionMinor" type="integer">
+  Minor version.
+</ParamField>
+
+<ParamField body="year" type="integer">
+  The year the font was created. **Deprecated as of UFO 2.** Applications should not rely on this attribute, but should preserve it if present in an existing file.
+</ParamField>
+
+## Generic Legal Information
+
+<ParamField body="copyright" type="string">
+  Copyright statement.
+</ParamField>
+
+<ParamField body="trademark" type="string">
+  Trademark statement.
+</ParamField>
+
+## Generic Dimension Information
+
+<ParamField body="unitsPerEm" type="integer or float">
+  Units per em.
+</ParamField>
+
+<ParamField body="descender" type="integer or float">
+  Descender value.
+</ParamField>
+
+<ParamField body="xHeight" type="integer or float">
+  x-height value.
+</ParamField>
+
+<ParamField body="capHeight" type="integer or float">
+  Cap height value.
+</ParamField>
+
+<ParamField body="ascender" type="integer or float">
+  Ascender value.
+</ParamField>
+
+<ParamField body="italicAngle" type="float">
+  Italic angle.
+</ParamField>
+
+## Generic Miscellaneous Information
+
+<ParamField body="note" type="string">
+  Arbitrary note about the font.
+</ParamField>
+
+## OpenType head Table Fields
+
+These keys correspond to fields in the OpenType `head` table.
+
+<ParamField body="openTypeHeadCreated" type="string">
+  Creation date. Expressed as a string of the format `"YYYY/MM/DD HH:MM:SS"`. Month must be in the range 1–12; day in the range 1–end of month; hour in the range 0–23; minute and second each in the range 0–59.
+</ParamField>
+
+<ParamField body="openTypeHeadLowestRecPPEM" type="integer or float">
+  Smallest readable size in pixels. Corresponds to the OpenType `head` table `lowestRecPPEM` field.
+</ParamField>
+
+<ParamField body="openTypeHeadFlags" type="number list">
+  A list of bit numbers indicating the flags. Bit numbers are defined in the OpenType `head` specification. Corresponds to the `head` table `flags` field.
+</ParamField>
+
+<Info>
+  The following `head` fields are derived or set by the compiler and do not have direct `fontinfo.plist` keys: `fontRevision` (from `versionMajor`/`versionMinor`), `checkSumAdjustment`, `magicNumber`, `unitsPerEm` (from generic key), `created` (from `openTypeHeadCreated`), `modified`, `xMin`/`yMin`/`xMax`/`yMax`, `macStyle` (from `styleMapStyleName`), `indexToLocFormat`, and `glyphDataFormat`.
+</Info>
+
+## OpenType hhea Table Fields
+
+These keys correspond to fields in the OpenType `hhea` (horizontal header) table.
+
+<ParamField body="openTypeHheaAscender" type="integer or float">
+  Ascender value. Corresponds to the OpenType `hhea` table `Ascender` field.
+</ParamField>
+
+<ParamField body="openTypeHheaDescender" type="integer or float">
+  Descender value. Corresponds to the OpenType `hhea` table `Descender` field.
+</ParamField>
+
+<ParamField body="openTypeHheaLineGap" type="integer or float">
+  Line gap value. Corresponds to the OpenType `hhea` table `LineGap` field.
+</ParamField>
+
+<ParamField body="openTypeHheaCaretSlopeRise" type="integer">
+  Caret slope rise value. Corresponds to the OpenType `hhea` table `caretSlopeRise` field.
+</ParamField>
+
+<ParamField body="openTypeHheaCaretSlopeRun" type="integer">
+  Caret slope run value. Corresponds to the OpenType `hhea` table `caretSlopeRun` field.
+</ParamField>
+
+<ParamField body="openTypeHheaCaretOffset" type="integer or float">
+  Caret offset value. Corresponds to the OpenType `hhea` table `caretOffset` field.
+</ParamField>
+
+<Info>
+  The following `hhea` fields are calculated or set by the compiler: `advanceWidthMax`, `minLeftSideBearing`, `minRightSideBearing`, `xMaxExtent`, `metricDataFormat`, and `numberOfHMetrics`.
+</Info>
+
+## OpenType name Table Fields
+
+These keys correspond to name IDs in the OpenType `name` table.
+
+<ParamField body="openTypeNameDesigner" type="string">
+  Designer name. Corresponds to name ID 9.
+</ParamField>
+
+<ParamField body="openTypeNameDesignerURL" type="string">
+  URL for the designer. Corresponds to name ID 12.
+</ParamField>
+
+<ParamField body="openTypeNameManufacturer" type="string">
+  Manufacturer name. Corresponds to name ID 8.
+</ParamField>
+
+<ParamField body="openTypeNameManufacturerURL" type="string">
+  Manufacturer URL. Corresponds to name ID 11.
+</ParamField>
+
+<ParamField body="openTypeNameLicense" type="string">
+  License text. Corresponds to name ID 13.
+</ParamField>
+
+<ParamField body="openTypeNameLicenseURL" type="string">
+  URL for the license. Corresponds to name ID 14.
+</ParamField>
+
+<ParamField body="openTypeNameVersion" type="string">
+  Version string. Corresponds to name ID 5.
+</ParamField>
+
+<ParamField body="openTypeNameUniqueID" type="string">
+  Unique ID string. Corresponds to name ID 3.
+</ParamField>
+
+<ParamField body="openTypeNameDescription" type="string">
+  Description of the font. Corresponds to name ID 10.
+</ParamField>
+
+<ParamField body="openTypeNamePreferredFamilyName" type="string">
+  Preferred family name. Corresponds to name ID 16.
+</ParamField>
+
+<ParamField body="openTypeNamePreferredSubfamilyName" type="string">
+  Preferred subfamily name. Corresponds to name ID 17.
+</ParamField>
+
+<ParamField body="openTypeNameCompatibleFullName" type="string">
+  Compatible full name. Corresponds to name ID 18.
+</ParamField>
+
+<ParamField body="openTypeNameSampleText" type="string">
+  Sample text. Corresponds to name ID 20.
+</ParamField>
+
+<ParamField body="openTypeNameWWSFamilyName" type="string">
+  WWS family name. Corresponds to name ID 21.
+</ParamField>
+
+<ParamField body="openTypeNameWWSSubfamilyName" type="string">
+  WWS Subfamily name. Corresponds to name ID 22.
+</ParamField>
+
+<Info>
+  Several name IDs are derived from generic keys: name ID 0 (`copyright`), name ID 1 (`styleMapFamilyName`), name ID 2 (derived from `styleMapStyleName`), name ID 6 (`postscriptFontName`), name ID 7 (`trademark`). Compilers should follow the OpenType name table specification for building the complete name table.
+</Info>
+
+## OpenType OS/2 Table Fields
+
+These keys correspond to fields in the OpenType `OS/2` table.
+
+<ParamField body="openTypeOS2WidthClass" type="integer">
+  Width class value. Must be in the range 1–9. Corresponds to `usWidthClass`.
+</ParamField>
+
+<ParamField body="openTypeOS2WeightClass" type="integer">
+  Weight class value. Must be a positive integer. Corresponds to `usWeightClass`.
+</ParamField>
+
+<ParamField body="openTypeOS2Selection" type="number list">
+  A list of bit numbers for `fsSelection` bits to set. **Note:** Bits 0 (italic), 5 (bold), and 6 (regular) should not be set here — they are derived from `styleMapStyleName`.
+</ParamField>
+
+<ParamField body="openTypeOS2VendorID" type="string">
+  Four-character identifier for the creator of the font. Corresponds to `achVendID`.
+</ParamField>
+
+<ParamField body="openTypeOS2Panose" type="number list">
+  A list of 10 integers representing the Panose classification. Corresponds to the `OS/2` table `Panose` field.
+</ParamField>
+
+<ParamField body="openTypeOS2FamilyClass" type="number list">
+  Two integers representing the IBM font class ID (range 0–14) and font subclass (range 0–15). Corresponds to `sFamilyClass`.
+</ParamField>
+
+<ParamField body="openTypeOS2UnicodeRanges" type="number list">
+  A list of bit numbers for supported Unicode ranges. Corresponds to `ulUnicodeRange1`–`ulUnicodeRange4`.
+</ParamField>
+
+<ParamField body="openTypeOS2CodePageRanges" type="number list">
+  A list of bit numbers for supported code page ranges. Corresponds to `ulCodePageRange1` and `ulCodePageRange2`.
+</ParamField>
+
+<ParamField body="openTypeOS2TypoAscender" type="integer or float">
+  Ascender value. Corresponds to `sTypoAscender`.
+</ParamField>
+
+<ParamField body="openTypeOS2TypoDescender" type="integer or float">
+  Descender value. Corresponds to `sTypoDescender`.
+</ParamField>
+
+<ParamField body="openTypeOS2TypoLineGap" type="integer or float">
+  Line gap value. Corresponds to `sTypoLineGap`.
+</ParamField>
+
+<ParamField body="openTypeOS2WinAscent" type="integer or float">
+  Ascender value. Corresponds to `usWinAscent`.
+</ParamField>
+
+<ParamField body="openTypeOS2WinDescent" type="integer or float">
+  Descender value. Corresponds to `usWinDescent`.
+</ParamField>
+
+<ParamField body="openTypeOS2Type" type="number list">
+  A list of bit numbers indicating the embedding type. Corresponds to `fsType`.
+</ParamField>
+
+<ParamField body="openTypeOS2SubscriptXSize" type="integer or float">
+  Subscript horizontal font size. Corresponds to `ySubscriptXSize`.
+</ParamField>
+
+<ParamField body="openTypeOS2SubscriptYSize" type="integer or float">
+  Subscript vertical font size. Corresponds to `ySubscriptYSize`.
+</ParamField>
+
+<ParamField body="openTypeOS2SubscriptXOffset" type="integer or float">
+  Subscript x offset. Corresponds to `ySubscriptXOffset`.
+</ParamField>
+
+<ParamField body="openTypeOS2SubscriptYOffset" type="integer or float">
+  Subscript y offset. Corresponds to `ySubscriptYOffset`.
+</ParamField>
+
+<ParamField body="openTypeOS2SuperscriptXSize" type="integer or float">
+  Superscript horizontal font size. Corresponds to `ySuperscriptXSize`.
+</ParamField>
+
+<ParamField body="openTypeOS2SuperscriptYSize" type="integer or float">
+  Superscript vertical font size. Corresponds to `ySuperscriptYSize`.
+</ParamField>
+
+<ParamField body="openTypeOS2SuperscriptXOffset" type="integer or float">
+  Superscript x offset. Corresponds to `ySuperscriptXOffset`.
+</ParamField>
+
+<ParamField body="openTypeOS2SuperscriptYOffset" type="integer or float">
+  Superscript y offset. Corresponds to `ySuperscriptYOffset`.
+</ParamField>
+
+<ParamField body="openTypeOS2StrikeoutSize" type="integer or float">
+  Strikeout size. Corresponds to `yStrikeoutSize`.
+</ParamField>
+
+<ParamField body="openTypeOS2StrikeoutPosition" type="integer or float">
+  Strikeout position. Corresponds to `yStrikeoutPosition`.
+</ParamField>
+
+<Info>
+  The following `OS/2` fields are calculated or set by the compiler: `xAvgCharWidth`, `fsSelection` (from `styleMapStyleName`), `usFirstCharIndex`, `usLastCharIndex`, `sxHeight` (from `xHeight`), `sCapHeight` (from `capHeight`), `usDefaultChar`, `usBreakChar`, and `usMaxContext`.
+</Info>
+
+## OpenType vhea Table Fields
+
+These keys correspond to fields in the OpenType `vhea` (vertical header) table.
+
+<ParamField body="openTypeVheaVertTypoAscender" type="integer or float">
+  Ascender value. Corresponds to the `vhea` table `vertTypoAscender` field.
+</ParamField>
+
+<ParamField body="openTypeVheaVertTypoDescender" type="integer or float">
+  Descender value. Corresponds to the `vhea` table `vertTypoDescender` field.
+</ParamField>
+
+<ParamField body="openTypeVheaVertTypoLineGap" type="integer or float">
+  Line gap value. Corresponds to the `vhea` table `vertTypoLineGap` field.
+</ParamField>
+
+<ParamField body="openTypeVheaCaretSlopeRise" type="integer">
+  Caret slope rise value. Corresponds to the `vhea` table `caretSlopeRise` field.
+</ParamField>
+
+<ParamField body="openTypeVheaCaretSlopeRun" type="integer">
+  Caret slope run value. Corresponds to the `vhea` table `caretSlopeRun` field.
+</ParamField>
+
+<ParamField body="openTypeVheaCaretOffset" type="integer or float">
+  Caret offset value. Corresponds to the `vhea` table `caretOffset` field.
+</ParamField>
+
+## PostScript Specific Data
+
+These keys supply data for Type 1, CFF, and the OpenType `post` table.
+
+<ParamField body="postscriptFontName" type="string">
+  Name to be used for the `FontName` field in Type 1/CFF table.
+</ParamField>
+
+<ParamField body="postscriptFullName" type="string">
+  Name to be used for the `FullName` field in Type 1/CFF table. If not given, can be created by combining `familyName` and `styleName`.
+</ParamField>
+
+<ParamField body="postscriptSlantAngle" type="float">
+  Artificial slant angle.
+</ParamField>
+
+<ParamField body="postscriptUniqueID" type="integer">
+  A unique ID number as defined in the Type 1/CFF specification.
+</ParamField>
+
+<ParamField body="postscriptUnderlineThickness" type="integer or float">
+  Underline thickness value. Corresponds to the Type 1/CFF/`post` table `UnderlineThickness` field.
+</ParamField>
+
+<ParamField body="postscriptUnderlinePosition" type="integer or float">
+  Underline position value. Corresponds to the Type 1/CFF/`post` table `UnderlinePosition` field.
+</ParamField>
+
+<ParamField body="postscriptIsFixedPitch" type="boolean">
+  Indicates if the font is monospaced. A compiler could calculate this automatically, but the designer may override it. Corresponds to the Type 1/CFF `isFixedPitched` field.
+</ParamField>
+
+<ParamField body="postscriptBlueValues" type="number list">
+  Up to 14 integers or floats for the Type 1/CFF `BlueValues` field. Must contain an even number of values following the Type 1/CFF specification rules.
+</ParamField>
+
+<ParamField body="postscriptOtherBlues" type="number list">
+  Up to 10 integers or floats for the Type 1/CFF `OtherBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField body="postscriptFamilyBlues" type="number list">
+  Up to 14 integers or floats for the Type 1/CFF `FamilyBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField body="postscriptFamilyOtherBlues" type="number list">
+  Up to 10 integers or floats for the Type 1/CFF `FamilyOtherBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField body="postscriptStemSnapH" type="number list">
+  List of horizontal stems sorted in increasing order. Up to 12 integers or floats. Corresponds to the Type 1/CFF `StemSnapH` field.
+</ParamField>
+
+<ParamField body="postscriptStemSnapV" type="number list">
+  List of vertical stems sorted in increasing order. Up to 12 integers or floats. Corresponds to the Type 1/CFF `StemSnapV` field.
+</ParamField>
+
+<ParamField body="postscriptBlueFuzz" type="integer or float">
+  `BlueFuzz` value. Corresponds to the Type 1/CFF `BlueFuzz` field.
+</ParamField>
+
+<ParamField body="postscriptBlueShift" type="integer or float">
+  `BlueShift` value. Corresponds to the Type 1/CFF `BlueShift` field.
+</ParamField>
+
+<ParamField body="postscriptBlueScale" type="float">
+  `BlueScale` value. Corresponds to the Type 1/CFF `BlueScale` field.
+</ParamField>
+
+<ParamField body="postscriptForceBold" type="boolean">
+  Indicates how the Type 1/CFF `ForceBold` field should be set.
+</ParamField>
+
+<ParamField body="postscriptDefaultWidthX" type="integer or float">
+  Default width for glyphs.
+</ParamField>
+
+<ParamField body="postscriptNominalWidthX" type="integer or float">
+  Nominal width for glyphs.
+</ParamField>
+
+<ParamField body="postscriptWeightName" type="string">
+  A string indicating the overall weight of the font. Corresponds to the Type 1/CFF `Weight` field. Should be in sync with `openTypeOS2WeightClass`.
+</ParamField>
+
+<ParamField body="postscriptDefaultCharacter" type="string">
+  The name of the glyph that should be used as the default character in PFM files.
+</ParamField>
+
+<ParamField body="postscriptWindowsCharacterSet" type="integer">
+  The Windows character set. See the values table below.
+</ParamField>
+
+### postscriptWindowsCharacterSet Values
+
+| Value | Character Set         |
+|-------|-----------------------|
+| 1     | ANSI                  |
+| 2     | Default               |
+| 3     | Symbol                |
+| 4     | Macintosh             |
+| 5     | Shift JIS             |
+| 6     | Hangul                |
+| 7     | Hangul (Johab)        |
+| 8     | GB2312                |
+| 9     | Chinese BIG5          |
+| 10    | Greek                 |
+| 11    | Turkish               |
+| 12    | Vietnamese            |
+| 13    | Hebrew                |
+| 14    | Arabic                |
+| 15    | Baltic                |
+| 16    | Bitstream             |
+| 17    | Cyrillic              |
+| 18    | Thai                  |
+| 19    | Eastern European      |
+| 20    | OEM                   |
+
+## Macintosh FOND Resource Data
+
+These keys supply data for the Macintosh FOND resource, used in legacy Mac font packaging.
+
+<ParamField body="macintoshFONDFamilyID" type="integer">
+  Family ID number. Corresponds to `ffFamID` in the FOND resource.
+</ParamField>
+
+<ParamField body="macintoshFONDName" type="string">
+  Font name for the FOND resource.
+</ParamField>
+
+## Converting fontinfo.plist from UFO 1 to UFO 2
+
+Many UFO 1 keys were renamed in UFO 2 to fit the new tagged naming scheme. The table below maps each old UFO 1 key to its UFO 2 equivalent, along with any required data conversion.
+
+| UFO 1 Key | UFO 2 Key | Conversion Notes |
+|-----------|-----------|------------------|
+| `menuName` | `styleMapFamilyName` | No special conversion needed. |
+| `fontStyle` | `styleMapStyleName` | Convert integer to string. See table below. |
+| `designer` | `openTypeNameDesigner` | No special conversion needed. |
+| `designerURL` | `openTypeNameDesignerURL` | No special conversion needed. |
+| `createdBy` | `openTypeNameManufacturer` | No special conversion needed. |
+| `vendorURL` | `openTypeNameManufacturerURL` | No special conversion needed. |
+| `license` | `openTypeNameLicense` | No special conversion needed. |
+| `licenseURL` | `openTypeNameLicenseURL` | No special conversion needed. |
+| `ttVersion` | `openTypeNameVersion` | No special conversion needed. |
+| `ttUniqueID` | `openTypeNameUniqueID` | No special conversion needed. |
+| `notice` | `openTypeNameDescription` | No special conversion needed. |
+| `otFamilyName` | `openTypeNamePreferredFamilyName` | No special conversion needed. |
+| `otStyleName` | `openTypeNamePreferredSubfamilyName` | No special conversion needed. |
+| `otMacName` | `openTypeNameCompatibleFullName` | No special conversion needed. |
+| `widthName` | `openTypeOS2WidthClass` | Convert string to integer. See table below. |
+| `weightValue` | `openTypeOS2WeightClass` | No special conversion needed. |
+| `ttVendor` | `openTypeOS2VendorID` | No special conversion needed. |
+| `uniqueID` | `postscriptUniqueID` | No special conversion needed. |
+| `fontName` | `postscriptFontName` | No special conversion needed. |
+| `fullName` | `postscriptFullName` | No special conversion needed. |
+| `weightName` | `postscriptWeightName` | No special conversion needed. |
+| `slantAngle` | `postscriptSlantAngle` | No special conversion needed. |
+| `defaultWidth` | `postscriptDefaultWidthX` | No special conversion needed. |
+| `msCharSet` | `postscriptWindowsCharacterSet` | Convert bit value to integer. See table below. |
+| `fondID` | `macintoshFONDFamilyID` | No special conversion needed. |
+| `fondName` | `macintoshFONDName` | No special conversion needed. |
+
+### Converting fontStyle to styleMapStyleName
+
+<Tabs>
+  <Tab title="fontStyle (UFO 1 integer)">
+    | Old Value | New Value |
+    |-----------|-----------|
+    | 64        | `regular` |
+    | 1         | `italic`  |
+    | 32        | `bold`    |
+    | 33        | `bold italic` |
+  </Tab>
+  <Tab title="widthName to openTypeOS2WidthClass">
+    | Old Value           | New Value |
+    |---------------------|-----------|
+    | `Ultra-condensed`   | 1         |
+    | `Extra-condensed`   | 2         |
+    | `Condensed`         | 3         |
+    | `Semi-condensed`    | 4         |
+    | `Medium (normal)`   | 5         |
+    | `Semi-expanded`     | 6         |
+    | `Expanded`          | 7         |
+    | `Extra-expanded`    | 8         |
+    | `Ultra-expanded`    | 9         |
+  </Tab>
+  <Tab title="msCharSet to postscriptWindowsCharacterSet">
+    | Old Value | New Value |
+    |-----------|-----------|
+    | 0         | 1         |
+    | 1         | 2         |
+    | 2         | 3         |
+    | 77        | 4         |
+    | 128       | 5         |
+    | 129       | 6         |
+    | 130       | 7         |
+    | 134       | 8         |
+    | 136       | 9         |
+    | 161       | 10        |
+    | 162       | 11        |
+    | 163       | 12        |
+    | 177       | 13        |
+    | 178       | 14        |
+    | 186       | 15        |
+    | 200       | 16        |
+    | 204       | 17        |
+    | 222       | 18        |
+    | 238       | 19        |
+    | 255       | 20        |
+  </Tab>
+</Tabs>

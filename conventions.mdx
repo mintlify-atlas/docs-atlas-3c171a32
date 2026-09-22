@@ -1,0 +1,364 @@
+---
+title: "UFO Conventions: Data Types, Coordinates, and Property Lists"
+sidebarTitle: "Conventions"
+description: "Shared conventions across all UFO versions: XML property lists, the coordinate system, all data types, color definitions, identifiers, and file naming rules."
+---
+
+These conventions apply throughout the UFO specification, regardless of version. Understanding them is a prerequisite for correctly reading or writing any UFO file. They establish the rules for what content is allowed inside a UFO, how data is encoded, the meaning of the coordinate system, and how authoring tools should generate file names that are safe across all common operating systems.
+
+## Allowed Content Types
+
+A UFO may contain only plain files or directories. **Symlinks are not permitted anywhere inside a UFO.** Symlinks increase the number of edge cases that implementations must handle and complicate data exchange across different platforms without providing a clear benefit.
+
+## XML Property Lists
+
+XML property lists are used throughout the UFO specification for almost all structured data files. The [Apple Property List DTD](http://www.apple.com/DTDs/PropertyList-1.0.dtd) describes the format.
+
+<Tip>
+It is recommended — though not required — that dictionaries in property lists be written with their keys in ascending (alphabetical) order. Sorting keys makes UFO files more predictable to diff and easier to merge in version control systems such as Git.
+</Tip>
+
+## Coordinate System
+
+All coordinates and transformations in a UFO are relative to the origin (`x=0`, `y=0`). The axes follow standard mathematical convention:
+
+- The **positive x-axis** points to the **right**.
+- The **positive y-axis** points **up**.
+
+This convention applies unless a specific part of the specification explicitly states otherwise.
+
+## Data Types
+
+The following types are used throughout the UFO specification. Authoring tools are responsible for ensuring that UFO values convert correctly to binary output formats such as OpenType. For example, many OpenType fields require unsigned 16-bit integers, but a UFO may legally contain values larger than 65,535 — it is the tool's job to validate and clamp these appropriately at export time.
+
+<ParamField path="string" type="string">
+  A sequence of one or more characters encoded with the encoding scheme defined for the XML file the string belongs to. The range of characters allowed in a given string field may be further restricted; in such cases the specification defines the available subset.
+</ParamField>
+
+<ParamField path="integer" type="integer">
+  An optional sign character (`+` or `-`) followed by one or more digits `0`–`9`. There is no limit on the number of digits. If no sign character is present, the number is non-negative.
+</ParamField>
+
+<ParamField path="non-negative integer" type="integer ≥ 0">
+  An integer that is greater than or equal to zero. Uses the same notation as `integer` above.
+</ParamField>
+
+<ParamField path="float" type="float">
+  An optional sign character (`+` or `-`) followed by zero or more digits `0`–`9`, a period (`.`), and one or more digits `0`–`9`. There is no limit on the number of digits before or after the decimal. If no sign character is present, the number is non-negative.
+
+  Only **normal** and **zero** float values are allowed. `NaN`, infinite, and subnormal floats are disallowed.
+
+  Authoring tools should not write floats that can be represented losslessly as integers unless the specification explicitly requires a float type for that field.
+</ParamField>
+
+<ParamField path="non-negative float" type="float ≥ 0">
+  A float that is greater than or equal to zero. Uses the same notation as `float` above.
+</ParamField>
+
+<ParamField path="list" type="array">
+  An ordered collection of items. The order of items is insignificant unless the specification explicitly states otherwise for a particular list.
+</ParamField>
+
+<ParamField path="dictionary" type="object">
+  An unordered associative array mapping string keys to values. In the XML property lists used throughout the UFO, keys must always be strings. Value types are defined per-key throughout the specification.
+</ParamField>
+
+<ParamField path="color definition" type="string">
+  A string containing a comma-separated sequence of four integers or floats, each between `0` and `1` inclusive, representing the **red**, **green**, **blue**, and **alpha** components of a color. Whitespace around the values is permitted. Colors are always specified in the [sRGB](http://en.wikipedia.org/wiki/SRGB) color space.
+
+  | String | Red | Green | Blue | Alpha |
+  |--------|-----|-------|------|-------|
+  | `1,0,0,1` | 1.0 | 0 | 0 | 1.0 |
+  | `0,.5,0,.5` | 0 | 0.5 | 0 | 0.5 |
+</ParamField>
+
+<ParamField path="control characters" type="string subset">
+  Any character with a Unicode value in the following ranges: U+0000–U+001F (C0 controls), U+007F (delete), and U+0080–U+009F (C1 controls). These characters are generally disallowed in string fields where the specification prohibits them.
+</ParamField>
+
+## Reverse Domain Naming Schemes
+
+In several places in the UFO, the [reverse domain naming system](http://en.wikipedia.org/wiki/Reverse-DNS) is recommended for creating unique keys and identifiers. To create a reverse domain name, reverse the relevant Internet domain.
+
+**Example:** If the Internet domain is `unifiedfontobject.org`, the reverse domain name is `org.unifiedfontobject`. Extensions can be appended to make the string unique — for example, `org.unifiedfontobject.MySpecialTool`.
+
+<Note>
+The prefix `public.*` (where `*` is an arbitrary string of one or more characters) is **reserved** for data structures that are part of the official UFO specification. Third-party tools must not use keys beginning with `public.`.
+</Note>
+
+## Identifiers
+
+Identifiers are optional string attributes attached to several objects in a UFO (contours, components, points, and others). When present, an identifier must be unique within the context defined for each object type by the specification.
+
+**Format rules:**
+
+- Between **1 and 100 characters** long.
+- All characters must be in the **printable ASCII range**: `0x20` to `0x7E` (space through tilde).
+
+There is no mandated identifier generation algorithm. Random strings, simple integers, UUIDs, timestamps, and any other scheme that produces compliant strings are all valid.
+
+### Example Identifier Algorithm
+
+The algorithm below generates a 10-character random string drawn from `0–9`, `A–Z`, and `a–z`, giving a space of 62¹⁰ possible values.
+
+```python
+import random
+
+characters = list("0123456789")
+characters += list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+characters += list("abcdefghijklmnopqrstuvwxyz")
+identifierLength = 10
+identifierRange = range(identifierLength)
+
+def makeRandomIdentifier(existing, recursionDepth=0):
+    if recursionDepth >= 50:
+        raise NotImplementedError, \
+            "Failed 50 times in a row to create a unique id. Sorry."
+    identifier = []
+    for i in identifierRange:
+        c = random.choice(characters)
+        identifier.append(c)
+    identifier = "".join(identifier)
+    if identifier in existing:
+        return makeRandomIdentifier(existing, recursionDepth+1)
+    else:
+        return identifier
+```
+
+## Common User Name to File Name Algorithm
+
+There is no single mandated algorithm for converting glyph names (user names) to file names. The algorithm documented here is a widely used reference implementation designed to avoid name clashes on common file systems.
+
+### Rules
+
+1. File names must be **unique**.
+2. File names must be **case-insensitive** (so `A` and `a` are treated as the same name).
+3. File names may use any character representable by UTF-8, **except** characters reserved across popular file systems.
+4. File names must be **no longer than 255 characters**.
+5. File names (regardless of extension and case) must not match any [Windows reserved file name](https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file#naming-conventions).
+6. File names must be **valid Unicode strings**.
+
+### Algorithm Steps
+
+The inputs are the *name* (the user name without any prefix or suffix), an *existing* list of all current case-insensitive file names, and optional *prefix* and *suffix* strings. The *maximum length* is 255 minus the combined length of prefix and suffix.
+
+<Steps>
+  <Step title="Replace Illegal Characters">
+    Replace any illegal character in *name* with an underscore `_`. Illegal characters are:
+
+    `"` `(` `)` `*` `+` `/` `:` `<` `>` `?` `[` `\` `]` `|` and any character in the ASCII control range (U+0000–U+001F inclusive and U+007F).
+  </Step>
+  <Step title="Mark Uppercase Characters">
+    Insert an underscore `_` immediately after every uppercase character. This encodes case information without relying on the file system to preserve it.
+  </Step>
+  <Step title="Handle Leading Period">
+    If *name* begins with a period (`.`) and no prefix is being added, replace the leading period with an underscore.
+  </Step>
+  <Step title="Clip to Maximum Length">
+    If the revised *name* is longer than *maximum length*, remove characters from the end until it fits.
+  </Step>
+  <Step title="Handle Windows Reserved Names">
+    Split *name* on periods. For each part: if the part (case-insensitively) matches a Windows reserved name — `CON`, `CLOCK$`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9` — insert an underscore at the beginning of that part. Rejoin all parts with periods.
+  </Step>
+  <Step title="Ensure Uniqueness">
+    If the resulting full name (prefix + name + suffix) is already taken, append a 15-digit zero-padded counter (starting at `000000000000001`) to make it unique. If all counter values are exhausted, fall back to using a plain incrementing integer as the entire name.
+  </Step>
+</Steps>
+
+### Name Conversion Examples
+
+| Glyph Name | File Name |
+|------------|-----------|
+| `a` | `a` |
+| `A` | `A_` |
+| `AE` | `A_E_` |
+| `Ae` | `A_e` |
+| `ae` | `ae` |
+| `aE` | `aE_` |
+| `a.alt` | `a.alt` |
+| `A.alt` | `A_.alt` |
+| `A.Alt` | `A_.A_lt` |
+| `A.aLt` | `A_.aL_t` |
+| `A.alT` | `A_.alT_` |
+| `T_H` | `T__H_` |
+| `T_h` | `T__h` |
+| `t_h` | `t_h` |
+| `F_F_I` | `F__F__I_` |
+| `f_f_i` | `f_f_i` |
+| `Aacute_V.swash` | `A_acute_V_.swash` |
+| `.notdef` | `_notdef` |
+| `con` | `_con` |
+| `CON` | `C_O_N_` |
+| `con.alt` | `_con.alt` |
+| `alt.con` | `alt._con` |
+
+### Reference Implementation
+
+```python
+illegalCharacters = "\" * + / : < > ? [ \\ ] | \0".split(" ")
+illegalCharacters += [chr(i) for i in range(1, 32)]
+illegalCharacters += [chr(0x7F)]
+reservedFileNames = "CON PRN AUX CLOCK$ NUL A:-Z: COM1".lower().split(" ")
+reservedFileNames += "LPT1 LPT2 LPT3 COM2 COM3 COM4".lower().split(" ")
+maxFileNameLength = 255
+
+def userNameToFileName(userName, existing=[], prefix="", suffix=""):
+    """
+    existing should be a case-insensitive list
+    of all existing file names.
+
+    >>> userNameToFileName(u"a")
+    u'a'
+    >>> userNameToFileName(u"A")
+    u'A_'
+    >>> userNameToFileName(u"AE")
+    u'A_E_'
+    >>> userNameToFileName(u"Ae")
+    u'A_e'
+    >>> userNameToFileName(u"ae")
+    u'ae'
+    >>> userNameToFileName(u"aE")
+    u'aE_'
+    >>> userNameToFileName(u"a.alt")
+    u'a.alt'
+    >>> userNameToFileName(u"A.alt")
+    u'A_.alt'
+    >>> userNameToFileName(u"A.Alt")
+    u'A_.A_lt'
+    >>> userNameToFileName(u"A.aLt")
+    u'A_.aL_t'
+    >>> userNameToFileName(u"A.alT")
+    u'A_.alT_'
+    >>> userNameToFileName(u"T_H")
+    u'T__H_'
+    >>> userNameToFileName(u"T_h")
+    u'T__h'
+    >>> userNameToFileName(u"t_h")
+    u't_h'
+    >>> userNameToFileName(u"F_F_I")
+    u'F__F__I_'
+    >>> userNameToFileName(u"f_f_i")
+    u'f_f_i'
+    >>> userNameToFileName(u"Aacute_V.swash")
+    u'A_acute_V_.swash'
+    >>> userNameToFileName(u".notdef")
+    u'_notdef'
+    >>> userNameToFileName(u"con")
+    u'_con'
+    >>> userNameToFileName(u"CON")
+    u'C_O_N_'
+    >>> userNameToFileName(u"con.alt")
+    u'_con.alt'
+    >>> userNameToFileName(u"alt.con")
+    u'alt._con'
+    """
+    # the incoming name must be a unicode string
+    assert isinstance(userName, unicode), \
+        "The value for userName must be a unicode string."
+    # establish the prefix and suffix lengths
+    prefixLength = len(prefix)
+    suffixLength = len(suffix)
+    # replace an initial period with an _
+    # if no prefix is to be added
+    if not prefix and userName[0] == ".":
+        userName = "_" + userName[1:]
+    # filter the user name
+    filteredUserName = []
+    for character in userName:
+        # replace illegal characters with _
+        if character in illegalCharacters:
+            character = "_"
+        # add _ to all non-lower characters
+        elif character != character.lower():
+            character += "_"
+        filteredUserName.append(character)
+    userName = "".join(filteredUserName)
+    # clip to 255
+    sliceLength = maxFileNameLength - prefixLength - suffixLength
+    userName = userName[:sliceLength]
+    # test for illegal file names
+    parts = []
+    for part in userName.split("."):
+        if part.lower() in reservedFileNames:
+            part = "_" + part
+        parts.append(part)
+    userName = ".".join(parts)
+    # test for clash
+    fullName = prefix + userName + suffix
+    if fullName.lower() in existing:
+        fullName = handleClash1(userName, existing, prefix, suffix)
+    # finished
+    return fullName
+
+def handleClash1(userName, existing=[], prefix="", suffix=""):
+    """
+    existing should be a case-insensitive list
+    of all existing file names.
+
+    >>> prefix = ("0" * 5) + "."
+    >>> suffix = "." + ("0" * 10)
+    >>> existing = ["a" * 5]
+
+    >>> e = list(existing)
+    >>> handleClash1(userName="A" * 5, existing=e,
+    ...     prefix=prefix, suffix=suffix)
+    '00000.AAAAA000000000000001.0000000000'
+
+    >>> e = list(existing)
+    >>> e.append(prefix + "aaaaa" + "1".zfill(15) + suffix)
+    >>> handleClash1(userName="A" * 5, existing=e,
+    ...     prefix=prefix, suffix=suffix)
+    '00000.AAAAA000000000000002.0000000000'
+    """
+    prefixLength = len(prefix)
+    suffixLength = len(suffix)
+    if prefixLength + len(userName) + suffixLength + 15 > maxFileNameLength:
+        l = (prefixLength + len(userName) + suffixLength + 15)
+        sliceLength = maxFileNameLength - l
+        userName = userName[:sliceLength]
+    finalName = None
+    counter = 1
+    while finalName is None:
+        name = userName + str(counter).zfill(15)
+        fullName = prefix + name + suffix
+        if fullName.lower() not in existing:
+            finalName = fullName
+            break
+        else:
+            counter += 1
+        if counter >= 999999999999999:
+            break
+    if finalName is None:
+        finalName = handleClash2(existing, prefix, suffix)
+    return finalName
+
+def handleClash2(existing=[], prefix="", suffix=""):
+    """
+    existing should be a case-insensitive list
+    of all existing file names.
+
+    >>> prefix = ("0" * 5) + "."
+    >>> suffix = "." + ("0" * 10)
+    >>> existing = [prefix + str(i) + suffix for i in range(100)]
+
+    >>> e = list(existing)
+    >>> handleClash2(existing=e, prefix=prefix, suffix=suffix)
+    '00000.100.0000000000'
+    """
+    maxLength = maxFileNameLength - len(prefix) - len(suffix)
+    maxValue = int("9" * maxLength)
+    finalName = None
+    counter = 1
+    while finalName is None:
+        fullName = prefix + str(counter) + suffix
+        if fullName.lower() not in existing:
+            finalName = fullName
+            break
+        else:
+            counter += 1
+        if counter >= maxValue:
+            break
+    if finalName is None:
+        raise NameTranslationError("No unique name could be found.")
+    return finalName
+```

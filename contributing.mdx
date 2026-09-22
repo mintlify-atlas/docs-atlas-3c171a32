@@ -1,0 +1,134 @@
+---
+title: "Contributing to the UFO Specification"
+sidebarTitle: "Contributing"
+description: "The process for proposing changes to the UFO specification, from problem identification through solution development, versioning decisions, and documentation requirements."
+---
+
+The UFO specification is a community project and problem reports and enhancement proposals are welcome. Contributing is deliberately methodical — the specification is permanent once changed, so each proposal goes through a careful multi-stage process to ensure quality and longevity. This page walks through that process from start to finish.
+
+## Contribution Process
+
+<Steps>
+
+### Identify the Problem
+
+The process begins when a problem is identified. A problem may be a mistake in the current specification, a missing piece of data, a new idea that needs a storage location, or something else entirely.
+
+When defining the problem, consider these questions about its nature:
+
+- Is the problem caused by a **mistake** in the specification?
+- Is the problem caused by something **missing** from the specification?
+- Has the problem been **identified and discussed before**?
+- How long has this been a problem, and how **urgent** is it?
+
+Also consider the **scope** of the problem:
+
+- Does the problem affect only a single user, workflow, or tool?
+- Does the problem affect only a single font binary format?
+- Does the problem potentially affect **all users**?
+
+<Tip>
+If the problem only affects a single user, workflow, or tool, it is often better to address it through an [extension](/extensions) rather than a specification change. Extensions can be deployed faster and are more flexible.
+</Tip>
+
+If the problem does seem to require a specification change, [open an issue on GitHub](https://github.com/unified-font-object/ufo-spec/issues). If you are unsure, feel free to discuss the problem first on the [UFO Specification Google Group](https://groups.google.com/g/ufo-spec). Once an issue is open, discussion will begin — please be patient, as this project is managed by volunteers.
+
+### Develop a Solution
+
+Solutions are developed collaboratively within the issue defining the problem. Ideally, the person who identified the problem will lead, or at least actively participate in, the solution. The development process is deliberately slow to keep the specification free of cruft.
+
+**First, work out the solution in abstract.** Before diving into storage formats, clarify what the solution actually needs to accomplish:
+
+- What data is needed to solve the problem?
+- How should this data be interpreted?
+- What should happen when this data is not defined?
+- What objects in the UFO does this data relate to?
+- Do existing tools or specifications support this or similar data?
+- What edge cases can occur when interpreting the data?
+
+**Then, determine how and where the data will be stored.** Once the general idea is solid, the storage location and format must be decided. The following requirements apply to all formats used within the UFO specification:
+
+- Storage formats **must** be open and not proprietary.
+- Formats must be **human readable and human editable** — in practice this means plain text files. The specification uses XML, but CSV, YAML, and similar formats are potentially acceptable. The only exceptions are data types that cannot be represented in plain text, such as images.
+- Programmatic reading and writing **should be easy to implement**, preferably using widely available, open libraries in multiple programming languages.
+
+Additions to the specification can be stored in several places:
+
+- An existing file
+- A new file
+- A new GLIF attribute in an existing GLIF element
+- A new GLIF element
+- A public lib key/value pair
+- A public data directory key/value
+
+### Determine Applicable UFO Versions
+
+Once the storage location and format are approved, determine which versions of the specification the change applies to.
+
+<Tabs>
+  <Tab title="Major Version Increase">
+    A change must wait for a full format version increase if it involves **any** of the following:
+
+    - Any major addition of new data outside of the libs or data directory
+    - Any data that will be difficult for developers to implement
+    - Anything that fundamentally changes the interpretation of any part of the specification
+
+    The only exceptions are extreme problems that require an immediate change.
+  </Tab>
+  <Tab title="Minor Version Increase">
+    A change must wait for a minor format version increase if it involves **any** of the following:
+
+    - Any data that could be lost in tools that support the current format major and minor version
+    - Any data added to an official file outside of the libs or data directory
+  </Tab>
+  <Tab title="Backwards Compatible">
+    Additions to, removals from, and changes to the lib and data directory are **backwards compatible** and may be added at any point without a version increment.
+  </Tab>
+</Tabs>
+
+### Document the Change
+
+Once the format, location, and applicable specification versions are approved, the change must be fully documented in a [fork of the specification repository](https://github.com/unified-font-object/ufo-spec). Documentation must appear in all applicable places and follow the established formatting and language conventions of the specification. A [pull request](https://github.com/unified-font-object/ufo-spec/pulls) may then be submitted for review.
+
+</Steps>
+
+## Evaluation Criteria
+
+As a proposal is discussed, the specification managers will advise and evaluate proposed solutions. Any change may be assessed against the following criteria:
+
+<AccordionGroup>
+  <Accordion title="Is the specification the right place for this solution?">
+    Some problems are better addressed through tool-specific extensions or third-party conventions rather than by modifying the official specification.
+  </Accordion>
+  <Accordion title="Does the solution follow the UFO Design Philosophy?">
+    Proposals should align with the core design values of the UFO format, including simplicity, openness, and human readability.
+  </Accordion>
+  <Accordion title="Does the solution come from relevant expertise?">
+    Does the solution come from someone with expertise in the subject? If not, is there an expert who can offer feedback?
+  </Accordion>
+  <Accordion title="Is the solution as simple and minimal as possible?">
+    Prefer the simplest solution that fully addresses the problem. Over-engineering introduces maintenance burden and implementation complexity.
+  </Accordion>
+  <Accordion title="Does the solution completely solve the problem?">
+    Partial solutions that leave important edge cases unaddressed are discouraged.
+  </Accordion>
+  <Accordion title="Does the solution change the meaning of existing data?">
+    Changes that alter the interpretation of data in existing UFO files are treated with extra scrutiny.
+  </Accordion>
+  <Accordion title="Is the storage location appropriate?">
+    The location where data is stored should match the nature and scope of that data.
+  </Accordion>
+  <Accordion title="How difficult will the solution be to implement?">
+    Solutions that require significant developer effort may need a major version increment or extra review time.
+  </Accordion>
+  <Accordion title="Is the documentation unambiguous?">
+    The specification must be written clearly enough that independent implementations reach the same result.
+  </Accordion>
+  <Accordion title="Will the solution stand the test of time?">
+    Changes to the specification are permanent. The community must be absolutely sure before a change is merged.
+  </Accordion>
+</AccordionGroup>
+
+## Meetings
+
+Historically there are informal meetings about the specification around the [Robothon](http://typemedia.org/robothon/) conference, held roughly every three years. On July 31, 2020, the first open virtual meeting was held — the [meeting notes are available online](https://docs.google.com/document/d/1REf695Yxnu3aj_UqcVfF0WTyV8PUaPo-r6duEHxtj48/edit).

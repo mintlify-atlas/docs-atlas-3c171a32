@@ -1,0 +1,142 @@
+---
+title: "UFO 3 Format: Directory Structure and Glyph Layers"
+sidebarTitle: "Overview"
+description: "UFO 3 packages store font data as a directory or ZIP archive with layered glyph sets, a defined file structure, and clear storage format rules."
+---
+
+UFO 3 is a directory or ZIP archive that represents font data with one or more glyph layers. It builds on UFO 2 by introducing layered glyphs, a dedicated images directory, arbitrary custom data storage, and a single-file ZIP distribution format. Every file and directory inside the package has a unique purpose defined by the specification.
+
+## Terminology
+
+The terms **must**, **must not**, **required**, **shall**, **shall not**, **should**, **should not**, **recommended**, **may**, and **optional** used throughout this specification conform to [RFC 2119](http://www.ietf.org/rfc/rfc2119.txt).
+
+The term **authoring tool** refers to any software that reads or writes UFOs. Authoring tools may take many forms:
+
+1. A font editor that uses UFO as its native file format.
+2. A tool that imports data from or exports data to a UFO.
+3. A programming library for reading or writing UFO data.
+4. A script for modifying a UFO.
+
+This list is not exclusive.
+
+## Storage Formats
+
+UFO 3 supports two storage formats. **UFO Package** is a multi-file, file system directory structure. **UFO ZIP** is a ZIP archive that contains the same directory structure as UFO Package.
+
+<Note>
+A UFO ZIP must conform to all of the following requirements:
+
+1. ZIP64 format is allowed, but not required.
+2. File names must be encoded in UTF-8.
+3. All contents of the UFO must be contained within a single directory — for example, `rootdirectory/metainfo.plist` and `rootdirectory/kerning.plist`. The name of this directory is arbitrary and no assumptions should be made about it.
+4. The file may or may not be compressed.
+5. The file must **not** be encrypted.
+</Note>
+
+## File Name Extensions
+
+| Extension | Storage Format |
+|-----------|---------------|
+| `.ufo`    | UFO Package   |
+| `.ufoz`   | UFO ZIP       |
+
+## Directory Structure
+
+UFO 3 follows this file structure:
+
+```
+*.ufo/
+├── metainfo.plist
+├── fontinfo.plist
+├── groups.plist
+├── kerning.plist
+├── features.fea
+├── lib.plist
+├── layercontents.plist
+├── glyphs/
+│   ├── contents.plist
+│   ├── layerinfo.plist
+│   └── *.glif
+├── images/
+│   └── *.png
+└── data/
+```
+
+Each file and directory has a unique meaning, purpose, and data structure:
+
+| File / Directory | Description |
+|-----------------|-------------|
+| `metainfo.plist` | Format version, creator, and related metadata. |
+| `fontinfo.plist` | Various font info data. |
+| `groups.plist` | Glyph group definitions. |
+| `kerning.plist` | Kerning data. |
+| `features.fea` | OpenType feature definitions. |
+| `lib.plist` | Arbitrary custom data. |
+| `layercontents.plist` | Glyphs directory name to layer name mapping. |
+| `glyphs*/` | A directory containing a glyph set representing a layer. |
+| `glyphs*/contents.plist` | File name to glyph name mapping. |
+| `glyphs*/layerinfo.plist` | Information about the layer. |
+| `glyphs*/*.glif` | A glyph definition file. |
+| `images/` | A directory containing images referenced by glyphs. |
+| `data/` | Arbitrary custom data in a quantity or structure that cannot be stored in `lib.plist`. |
+
+## Glyph Layers
+
+UFO 3 supports layered glyphs. Layers can be used for anything — the common foreground and background drawing environment, multi-layered fonts, glyph revision history, and more. The layering structure is designed to be conceptually unrestricted.
+
+Layers are implemented as a series of **glyph sets** within the UFO. Each glyph set represents one layer for all glyphs in the font, and each glyph set is stored in its own `glyphs` directory. There is one required glyph set that represents the primary outline source of the glyph — this set must be stored in the `glyphs` directory. Additional layers are stored in other directories as defined in the `layercontents.plist` documentation.
+
+### Character Mapping
+
+A character-to-glyph mapping for the UFO may be created by scanning the GLIF files in the required layer and retrieving the first Unicode element, if present. There is no guarantee that a single Unicode value will not appear in more than one GLIF. Authoring tools may handle these conflicts in their own way.
+
+A glyph with the same name in more than one layer may have different Unicode values in each layer. Authoring tools using the native file model should maintain those different Unicode values. Import/export model authoring tools may or may not retain Unicode values on layers other than the required layer. All handling should follow the policies in the Authoring Tool Guidelines.
+
+## Changes from UFO 2
+
+The following summarises the major changes introduced in UFO 3. Sub-sections of the specification overrule this list where there are conflicts.
+
+<CardGroup cols={2}>
+  <Card title="Storage Format" icon="file-zipper">
+    A single-file ZIP distribution format (UFO ZIP / `.ufoz`) was added.
+  </Card>
+  <Card title="metainfo.plist" icon="circle-info">
+    The `formatVersion` was bumped to 3. A new `formatVersionMinor` key was introduced.
+  </Card>
+  <Card title="fontinfo.plist" icon="font">
+    Added support for specific name table entries, WOFF metadata, font-level guidelines, and the gasp table. Value types for many keys were clarified.
+  </Card>
+  <Card title="groups.plist" icon="object-group">
+    Kerning group behaviour was formally defined, and a mechanism for standardising group names was added.
+  </Card>
+  <Card title="kerning.plist" icon="table">
+    Added writing direction info, documentation for new kerning groups, extensive pair-type information, and conversion guidance from UFO 1/2.
+  </Card>
+  <Card title="features.fea" icon="code">
+    The requirement was strengthened from "should be plain text" to "must be plain text".
+  </Card>
+  <Card title="lib.plist" icon="book">
+    Added a standardisation mechanism for lib keys and a standard place for glyph order storage.
+  </Card>
+  <Card title="layercontents.plist" icon="layer-group">
+    This file is new in UFO 3. It maps glyphs directory names to layer names.
+  </Card>
+  <Card title="glyphs/" icon="pen-nib">
+    More than one `glyphs` directory is now allowed. Each directory represents one layer.
+  </Card>
+  <Card title="glyphs/layerinfo.plist" icon="circle-info">
+    This file is new in UFO 3. It stores per-layer metadata.
+  </Card>
+  <Card title="glyphs/GLIF" icon="vector-square">
+    Version bumped to 2. New `identifier` attributes on contours, components, and points. New `image`, `guideline`, and `anchor` elements added.
+  </Card>
+  <Card title="images/ and data/" icon="folder-open">
+    Both directories are new in UFO 3, enabling image references in glyphs and arbitrary binary/structured data storage.
+  </Card>
+</CardGroup>
+
+### Important Corrections
+
+<Warning>
+The guideline `angle` attribute was changed from being measured in the **clockwise** direction to the **counter-clockwise** direction. Implementations that read UFO 2 guideline angles must account for this reversal when upgrading data to UFO 3.
+</Warning>

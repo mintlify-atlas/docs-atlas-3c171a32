@@ -1,0 +1,80 @@
+---
+title: "UFO: The Unified Font Object Specification"
+sidebarTitle: "Introduction"
+description: "UFO is a cross-platform, human-readable, application-independent format for storing font data, used by font editors, libraries, and scripts."
+---
+
+The Unified Font Object (UFO) is a cross-platform, cross-application, human-readable, future-proof format for storing font data. Stored as a plain directory of text files on disk, a UFO can be opened in any text editor, tracked in version control, and processed by scripts without requiring any proprietary software. Whether you are building a font editor, writing a Python library, or automating glyph transformations, UFO provides a stable and transparent foundation.
+
+## Design Philosophy
+
+Every decision in the UFO specification follows three guiding principles:
+
+<CardGroup cols={2}>
+  <Card title="Human Readable & Editable" icon="file-lines">
+    All UFO data is stored as plain text — XML property lists, OpenType feature files, and GLIF outlines — so it can be inspected and edited without specialized tools.
+  </Card>
+  <Card title="Application Independent" icon="shuffle">
+    The format is not tied to any single application. Any authoring tool — font editor, library, or script — can read and write UFO data without vendor lock-in.
+  </Card>
+  <Card title="No Unnecessary Duplication" icon="copy">
+    Data is stored in exactly one place unless duplication is strictly necessary, keeping the format lean and reducing the risk of inconsistencies.
+  </Card>
+  <Card title="Future Proof" icon="clock-rotate-left">
+    The specification is versioned and publicly maintained. Older UFO files remain readable as the spec evolves, and new versions add capabilities without breaking existing data.
+  </Card>
+</CardGroup>
+
+## File Extensions
+
+UFO supports two storage formats, each with its own file extension:
+
+| Extension | Format | Description |
+|-----------|--------|-------------|
+| `.ufo` | UFO Package | A multi-file directory structure on the file system. |
+| `.ufoz` | UFO ZIP | A ZIP archive containing the same directory structure as a UFO Package. |
+
+<Note>
+The `.ufoz` format was introduced in UFO 3. It uses standard ZIP compression and must not be encrypted. All file names inside the archive must be UTF-8 encoded, and all UFO contents must be contained within a single root directory inside the ZIP.
+</Note>
+
+## Who Uses UFO
+
+UFO is used across the type design toolchain:
+
+- **Font editors** such as Glyphs, RoboFont, and FontForge use UFO as a native or exchange format.
+- **Python libraries** such as [fontTools](https://github.com/fonttools/fonttools) and [ufoLib2](https://github.com/fonttools/ufoLib2) provide programmatic read/write access to UFO data.
+- **Build scripts** consume UFO sources to compile binary fonts (OTF, TTF, WOFF2) via tools like [ufo2ft](https://github.com/googlefonts/ufo2ft).
+- **Version control systems** benefit from UFO's plain-text structure — diffs are meaningful and merges are tractable.
+
+## Authoring Tools
+
+Throughout the specification, the term **authoring tool** refers to any software that reads or writes UFOs. This includes:
+
+1. A font editor that uses UFO as its native file format.
+2. A tool that imports data from or exports data to a UFO.
+3. A programming library for reading or writing UFO data.
+4. A script that modifies a UFO.
+
+## Specification Versions
+
+The UFO specification has evolved through four versions. Each version is a superset of its predecessor, adding new files, directories, and data structures:
+
+<CardGroup cols={2}>
+  <Card title="UFO 1 — 2004" icon="1" href="/ufo1/index">
+    The original release. Defined the core directory structure: `metainfo.plist`, `fontinfo.plist`, `groups.plist`, `kerning.plist`, `lib.plist`, and the `glyphs/` directory.
+  </Card>
+  <Card title="UFO 2 — March 2009" icon="2" href="/ufo2/index">
+    Redesigned `fontinfo.plist` for clarity and consistency. Added `features.fea` for OpenType feature definitions.
+  </Card>
+  <Card title="UFO 3 — March 2012" icon="3" href="/ufo3/index">
+    Introduced glyph layers, `layercontents.plist`, `images/`, `data/`, the `.ufoz` ZIP format, identifiers on contours and points, and many `fontinfo.plist` additions.
+  </Card>
+  <Card title="UFO 4 — In Development" icon="4" href="/versions">
+    An extension of UFO 3 currently being designed in the open. Proposals are tracked and discussed in the GitHub issue tracker.
+  </Card>
+</CardGroup>
+
+## Contributing
+
+The UFO specification is developed in the open. The source, issue tracker, and contribution guidelines are all hosted on [GitHub](https://github.com/unified-font-object/ufo-spec). If you have questions, comments, or proposals, post to the [UFO Specification Issue Tracker](https://github.com/unified-font-object/ufo-spec/issues) or subscribe to the [UFO Specification Google Group](https://groups.google.com/g/ufo-spec).

@@ -1,0 +1,232 @@
+---
+title: "UFO 2 GLIF Format: Glyph Interchange Format v1"
+sidebarTitle: "GLIF"
+description: "Complete reference for UFO 2 GLIF version 1 — XML glyph format covering the glyph, advance, unicode, outline, contour, point, component, and lib elements."
+---
+
+The Glyph Interchange Format (GLIF) is a simple, clear XML representation of a single glyph. In UFO 2, GLIF files use **format version 1** and are stored inside the `glyphs/` directory with a `.glif` extension. Each file stores the glyph's advance metrics, Unicode code point assignments, outline geometry (as contours and components), and an optional per-glyph custom data dictionary. The mapping from glyph names to file names is managed by `glyphs/contents.plist`.
+
+<Note>
+  This page documents GLIF format version 1, used in UFO 2. UFO 3 introduced GLIF format version 2, which adds `<image>`, `<guideline>`, and `<anchor>` elements not present here. See the [UFO 3 GLIF specification](/ufo3/glif) for the current format.
+</Note>
+
+**File format:** XML
+
+## Element Reference
+
+### `<glyph>` — Top-level element
+
+The `<glyph>` element is the root of every GLIF file. It wraps all other glyph data.
+
+#### Attributes
+
+<ParamField body="name" type="string" required>
+  The name of the glyph. Note: the authoritative glyph name mapping lives in `contents.plist`; when reading GLIF files it is safest to use that mapping rather than relying on this attribute, since manual edits can cause mismatches.
+</ParamField>
+
+<ParamField body="format" type="integer" required>
+  The format version. Must be `1` for UFO 2 GLIF files.
+</ParamField>
+
+#### Child Elements
+
+| Element    | Occurrences         |
+|------------|---------------------|
+| `<advance>`  | At most once        |
+| `<unicode>`  | Any number of times |
+| `<outline>`  | At most once        |
+| `<lib>`      | At most once        |
+
+---
+
+### `<advance>` — Horizontal and vertical metrics
+
+The `<advance>` element records the glyph's advance dimensions. It has no child elements.
+
+#### Attributes
+
+<ParamField body="width" type="integer or float">
+  The advance width (horizontal advance).
+</ParamField>
+
+<ParamField body="height" type="integer or float">
+  The vertical advance.
+</ParamField>
+
+---
+
+### `<unicode>` — Unicode code point
+
+The `<unicode>` element assigns a Unicode code point to the glyph. It may appear any number of times; the first occurrence defines the primary Unicode value. It has no child elements.
+
+#### Attributes
+
+<ParamField body="hex" type="string" required>
+  A Unicode code point expressed as a hexadecimal number (e.g., `002E` for the period character).
+</ParamField>
+
+---
+
+### `<outline>` — Outline description
+
+The `<outline>` element is a container for the glyph's outline geometry. It has no attributes of its own.
+
+#### Child Elements
+
+| Element       | Occurrences         |
+|---------------|---------------------|
+| `<component>` | Any number of times |
+| `<contour>`   | Any number of times |
+
+---
+
+### `<component>` — Referenced glyph component
+
+The `<component>` element inserts another glyph into this glyph's outline by reference, optionally with an affine transformation applied. It has no child elements.
+
+#### Attributes
+
+<ParamField body="base" type="string" required>
+  The name of the base glyph to reference. Default: none (required).
+</ParamField>
+
+<ParamField body="xScale" type="integer or float">
+  Matrix value. Default: `1`.
+</ParamField>
+
+<ParamField body="xyScale" type="integer or float">
+  Matrix value. Default: `0`.
+</ParamField>
+
+<ParamField body="yxScale" type="integer or float">
+  Matrix value. Default: `0`.
+</ParamField>
+
+<ParamField body="yScale" type="integer or float">
+  Matrix value. Default: `1`.
+</ParamField>
+
+<ParamField body="xOffset" type="integer or float">
+  Horizontal translation. Default: `0`.
+</ParamField>
+
+<ParamField body="yOffset" type="integer or float">
+  Vertical translation. Default: `0`.
+</ParamField>
+
+The six transformation values — `xScale`, `xyScale`, `yxScale`, `yScale`, `xOffset`, `yOffset` — form an affine transformation matrix `[xScale xyScale yxScale yScale xOffset yOffset]`. The identity (no transformation) is `[1 0 0 1 0 0]`.
+
+---
+
+### `<contour>` — Contour description
+
+The `<contour>` element groups a sequence of points that together define a single outline contour. It has no attributes.
+
+#### Child Elements
+
+| Element   | Occurrences         |
+|-----------|---------------------|
+| `<point>` | Any number of times |
+
+---
+
+### `<point>` — An attributed coordinate pair
+
+The `<point>` element describes a single point on a contour. It has no child elements.
+
+#### Attributes
+
+<ParamField body="x" type="integer or float" required>
+  The x coordinate.
+</ParamField>
+
+<ParamField body="y" type="integer or float" required>
+  The y coordinate.
+</ParamField>
+
+<ParamField body="type" type="string">
+  The point and/or segment type. Default: `offcurve`. See point type descriptions below.
+</ParamField>
+
+<ParamField body="smooth" type="string">
+  Only valid when `type` indicates an on-curve point. When set to `yes`, a smooth curvature is maintained at this point (equivalent to a *curve point* or *tangent point* in Fontographer terms). Default: `no`.
+</ParamField>
+
+<ParamField body="name" type="string">
+  An arbitrary name or label for this point. Names do not need to be unique within a contour or outline. Default: none.
+</ParamField>
+
+#### Point Types
+
+| Type       | Description |
+|------------|-------------|
+| `move`     | Must be the first point in a contour when present. Signals the beginning of an **open** contour. A closed contour does **not** start with a `move` point; it is a cyclic list with no fixed start. |
+| `line`     | Draw a straight line from the previous point to this point. The previous point may be a `move`, `line`, `curve`, or `qcurve` — not an `offcurve`. |
+| `offcurve` | This point is part of a curve segment leading to the next `curve` or `qcurve` point. This is the default type when `type` is omitted. |
+| `curve`    | Draw a cubic Bézier curve from the last non-`offcurve` point to this point. If 0 `offcurve` points precede it, a straight line is drawn; 1 `offcurve` produces a quadratic; 2 produce a regular cubic Bézier; more than 2 apply the Super Bézier algorithm. |
+| `qcurve`   | Similar to `curve`, but uses quadratic curves with TrueType implied on-curve points. |
+
+---
+
+### `<lib>` — Per-glyph custom data
+
+The `<lib>` element stores arbitrary custom data within the glyph. It may appear at most once. Its structure mirrors `lib.plist`: it has exactly one child element, which must be a `<dict>`. To avoid naming conflicts, keys should follow the Reverse Domain Naming Convention (e.g., `com.example.myKey`).
+
+## Differences from UFO 3 GLIF (Format 2)
+
+UFO 3 introduced GLIF format version 2 with three new top-level child elements not present in GLIF 1:
+
+<CardGroup cols={2}>
+  <Card title="&lt;image&gt;" icon="image">
+    **Added in GLIF 2.** Embeds a referenced image (e.g., a scan) in the glyph for tracing purposes. Not present in GLIF 1.
+  </Card>
+  <Card title="&lt;guideline&gt;" icon="ruler">
+    **Added in GLIF 2.** Stores per-glyph guideline lines. Not present in GLIF 1.
+  </Card>
+  <Card title="&lt;anchor&gt;" icon="anchor">
+    **Added in GLIF 2.** Defines named anchor points for mark attachment. Not present in GLIF 1.
+  </Card>
+  <Card title="format=&quot;2&quot;" icon="tag">
+    **GLIF 2** files carry `format="2"` on the `<glyph>` element. All UFO 2 GLIF files use `format="1"`.
+  </Card>
+</CardGroup>
+
+<Tip>
+  If you are building new tooling, target [UFO 3 GLIF format 2](/ufo3/glif) which supports anchors, guidelines, and image references in addition to all GLIF 1 features.
+</Tip>
+
+## Example
+
+The following is a complete GLIF 1 file for the period glyph, demonstrating a closed cubic Bézier contour with `smooth` on-curve points and a per-glyph `lib` entry.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="period" format="1">
+  <advance width="268"/>
+  <unicode hex="002E"/>
+  <outline>
+    <contour>
+      <point x="237" y="152"/>
+      <point x="193" y="187"/>
+      <point x="134" y="187" type="curve" smooth="yes"/>
+      <point x="74" y="187"/>
+      <point x="30" y="150"/>
+      <point x="30" y="88" type="curve" smooth="yes"/>
+      <point x="30" y="23"/>
+      <point x="74" y="-10"/>
+      <point x="134" y="-10" type="curve" smooth="yes"/>
+      <point x="193" y="-10"/>
+      <point x="237" y="25"/>
+      <point x="237" y="88" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.letterror.somestuff</key>
+      <string>arbitrary custom data!</string>
+    </dict>
+  </lib>
+</glyph>
+```
+
+This example shows a closed contour (no `move` point) with alternating `offcurve` pairs around four smooth `curve` on-curve points — a typical pattern for a circular or oval shape. The `<lib>` element uses a reverse domain key (`com.letterror.somestuff`) to store application-specific data without risk of collision.

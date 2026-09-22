@@ -1,0 +1,59 @@
+---
+title: "metainfo.plist: UFO Format Version and Tool Creator"
+sidebarTitle: "metainfo.plist"
+description: "The required metainfo.plist file identifies the UFO format version and the authoring tool that created the font package using an XML property list."
+---
+
+Every UFO 3 package must contain a `metainfo.plist` file at the root of the directory. This file is the first thing authoring tools should read, as it identifies the UFO format version and provides information about the tool that created the file. Without it a UFO is considered invalid.
+
+## File Format
+
+`metainfo.plist` is an [XML Property List](http://www.apple.com/DTDs/PropertyList-1.0.dtd). The top-level object is a dictionary whose keys and values are defined below.
+
+## Specification
+
+The property list data consists of a dictionary at the top level. All three keys are documented below.
+
+<ParamField path="creator" type="string">
+  The application or library that created the UFO. This value should follow a [reverse domain naming scheme](/ufo3/conventions#reverse-domain-naming-schemes) — for example, `org.robofab.ufoLib`. This key is **optional**.
+</ParamField>
+
+<ParamField path="formatVersion" type="non-negative integer" required>
+  The major version number of the UFO format. For UFO 3 this value must be `3`. This key is **required**.
+</ParamField>
+
+<ParamField path="formatVersionMinor" type="non-negative integer">
+  The minor version number of the UFO format. This key is **optional** when the minor version is `0`, but **must** be present when the minor version is any other value.
+</ParamField>
+
+## Example
+
+The following is a complete, valid `metainfo.plist` for a UFO 3 package:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>creator</key>
+  <string>org.robofab.ufoLib</string>
+  <key>formatVersion</key>
+  <integer>3</integer>
+  <key>formatVersionMinor</key>
+  <integer>0</integer>
+</dict>
+</plist>
+```
+
+<Note>
+Dictionaries in property lists are recommended to be written in ascending key order. This is not required by the spec, but it makes working with UFOs in revision control systems much more convenient by producing stable diffs.
+</Note>
+
+## Key Reference
+
+| Key | Type | Required |
+|-----|------|----------|
+| `creator` | string | Optional |
+| `formatVersion` | non-negative integer | **Required** |
+| `formatVersionMinor` | non-negative integer | Optional (required if minor ≠ 0) |

@@ -1,0 +1,61 @@
+---
+title: "Authoring Tool Guidelines for UFO Implementations"
+sidebarTitle: "Guidelines"
+description: "Requirements and recommendations for authoring tools that read and write UFO files, covering operating models, data preservation, and version-specific constraints."
+---
+
+Authoring tools that work with UFO files must follow a set of requirements and recommendations to ensure data integrity and interoperability across the ecosystem. These guidelines apply to all versions of the UFO specification, and each individual version or specification section may define additional constraints on top of these baseline rules.
+
+## Authoring Tool Operating Models
+
+Authoring tools may interact with UFO files using one of two distinct models. Understanding which model your tool uses is the first step toward correctly implementing these guidelines.
+
+### Import/Export
+
+The import/export model allows an authoring tool to import data from a UFO and/or export data to a UFO. The file format used after import, or before export, is **not** the UFO itself — it is a format specific to the authoring tool. The UFO acts as an interchange format rather than the tool's primary working format.
+
+When using this model, a tool may discard data during an import operation as long as the **original UFO data is not altered**. It is strongly recommended that users be informed of any data being ignored during import.
+
+### Native File Format
+
+The native file format model allows the UFO to serve directly as the authoring tool's working format. The user opens, edits, and saves the UFO in place — there is no intermediate proprietary format involved. This model places stricter obligations on the tool with respect to data preservation.
+
+## Requirements and Recommendations
+
+### Preserving Unknown Data
+
+<Note>
+Authoring tools that use the **native file format** operating model **must not** remove data from a UFO or any of a UFO's files without informing the user. For example, if an authoring tool doesn't work with groups, it must not silently remove the group data from the UFO.
+</Note>
+
+Tools using the import/export model have more flexibility — data may be discarded during an import operation — but the original UFO must remain unmodified. Even in this case, users should be notified about any ignored data.
+
+### Avoiding Unnecessary File Overwrites
+
+When writing data into an existing UFO, authoring tools should not overwrite files unnecessarily. For example, if `A.glif` already exists in a UFO and a glyph needs to be stored in a file also named `A.glif`, the file **should not be written** if the resulting file contents would be exactly the same as what is already on disk. This practice preserves the original file's modification timestamp, which is meaningful for version control systems and other external tooling.
+
+### Non-Conformant Data
+
+<Warning>
+Authoring tools **must not** add non-conformant data to the UFO structure outside of designated areas. Creating an arbitrary directory such as `Stuff For Me` at the root of the UFO package is not permitted. Similarly, adding an unofficial key like `myFontInfoData` directly to `fontinfo.plist` is not allowed.
+</Warning>
+
+If you need to store custom or tool-specific data, the UFO specification provides designated extension mechanisms — see the [Extensions](/extensions) page for details on the `lib` and `data` directory approaches.
+
+### Version-Specific Constraints
+
+<Warning>
+Authoring tools **must** write only the parts of a UFO that are defined for the specific format version being targeted. For example, a tool must not write a `data` directory into a UFO whose `metainfo.plist` declares a `formatVersion` of `2`, since the `data` directory was introduced in UFO 3.
+</Warning>
+
+Always read the `formatVersion` value from `metainfo.plist` before writing and ensure that every file and directory your tool produces is permitted for that version. Writing version-inappropriate structures can corrupt UFO packages for other tools and readers.
+
+## Summary of Rules
+
+| Rule | Model | Level |
+|------|-------|-------|
+| Do not silently remove data | Native File Format | MUST |
+| Inform user of ignored data on import | Import/Export | RECOMMENDED |
+| Do not overwrite files with identical content | Both | SHOULD |
+| Do not add non-conformant data outside designated areas | Both | MUST |
+| Write only structures permitted by the declared `formatVersion` | Both | MUST |

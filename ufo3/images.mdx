@@ -1,0 +1,95 @@
+---
+title: "Images Directory: PNG Images Referenced by Glyphs"
+sidebarTitle: "Images"
+description: "The images directory stores PNG files that can be referenced by glyphs via the GLIF image element, enabling sketch or reference artwork inside a UFO package."
+---
+
+The `images` directory holds image files that individual glyphs can reference as visual overlays or sketches. Every file placed here must be a PNG — the UFO specification does not support any other image format in this location. When a glyph's GLIF file contains an `<image>` element, its `fileName` attribute points directly to a file in this directory by name only, not by a relative or absolute path.
+
+<Note>
+The `images` directory was introduced in UFO 3. UFO 1 and UFO 2 packages do not have this directory.
+</Note>
+
+## Directory Rules
+
+The following constraints apply to everything stored inside `images`:
+
+- **PNG only.** All files must be in Portable Network Graphics (PNG) format. No other image format is permitted.
+- **No subdirectories.** The directory is flat — nested folders are not allowed.
+- **No symlinks.** Symbolic links within `images` are not permitted.
+- **Unique file names.** Each file must have a name that is unique within the directory. There are no further naming restrictions beyond making names appropriate for the target file system.
+- **Avoid duplicates.** Storing duplicate copies of the same image data under different names should be avoided, though it is not a hard error.
+- **Avoid unreferenced images.** Images that are not referenced by any glyph should not be stored here, though this is a recommendation rather than a strict requirement.
+
+## Relationship to the GLIF `<image>` Element
+
+Glyphs reference images through the `<image>` element inside a `.glif` file. This element may appear at most once per glyph and, when present, is always rendered *behind* the outline.
+
+### `<image>` Attributes
+
+<ParamField path="fileName" type="string" required>
+  The image file name, including its file extension (e.g. `Sketch 1.png`). This is a bare file name — not a relative or absolute file-system path. The file must exist in the UFO's `images` directory.
+</ParamField>
+
+<ParamField path="xScale" type="integer or float">
+  The x-axis scaling component of the transformation matrix. Defaults to `1`.
+</ParamField>
+
+<ParamField path="xyScale" type="integer or float">
+  The xy shear component of the transformation matrix. Defaults to `0`.
+</ParamField>
+
+<ParamField path="yxScale" type="integer or float">
+  The yx shear component of the transformation matrix. Defaults to `0`.
+</ParamField>
+
+<ParamField path="yScale" type="integer or float">
+  The y-axis scaling component of the transformation matrix. Defaults to `1`.
+</ParamField>
+
+<ParamField path="xOffset" type="integer or float">
+  The horizontal translation component of the transformation matrix. Defaults to `0`.
+</ParamField>
+
+<ParamField path="yOffset" type="integer or float">
+  The vertical translation component of the transformation matrix. Defaults to `0`.
+</ParamField>
+
+<ParamField path="color" type="string">
+  An optional color to apply to the image, expressed as a comma-separated `r,g,b,a` string (e.g. `1,0,0,0.5`). When present, this value takes precedence over any color defined on the layer.
+</ParamField>
+
+The six numeric transform attributes — `xScale`, `xyScale`, `yxScale`, `yScale`, `xOffset`, `yOffset` — form an Affine transformation matrix applied to the image. The default matrix `[1 0 0 1 0 0]` is the identity transformation. One image width unit equals one horizontal font unit and one image height unit equals one vertical font unit *before* the transformation is applied.
+
+### Example GLIF `<image>` Usage
+
+```xml
+<image fileName="Sketch 1.png" xOffset="100" yOffset="200"
+    xScale=".75" yScale=".75" color="1,0,0,.5" />
+```
+
+## Image Coloring
+
+Color can be applied to an image at two levels, resolved in this priority order:
+
+<Steps>
+  <Step title="Image element color attribute">
+    If the `<image>` element's `color` attribute is set, that color always wins.
+  </Step>
+  <Step title="Layer color (layerinfo.plist)">
+    If no color is set on the element, the `color` defined in `layerinfo.plist` for the containing layer is used.
+  </Step>
+  <Step title="Image's native colors">
+    If neither of the above is defined, the image is displayed using its own embedded colors — unless the authoring tool has a default color for images.
+  </Step>
+</Steps>
+
+When a color is applied, the authoring tool should convert the image to grayscale and then tint it with the specified color. The modified, colorized version of the image **must not** be written back into the `images` directory — only the original PNG is stored there.
+
+## Missing Images
+
+The specification describes what authoring tools must do with a valid `<image>` element: look up `fileName` in the `images` directory. If the referenced file is not present, the image simply cannot be displayed. The glyph itself remains valid; the missing image is treated as absent rather than as a hard error.
+
+<Warning>
+Referencing an image file that does not exist in the `images` directory will cause authoring tools to silently skip the image. Keep image files and GLIF references in sync to avoid invisible references accumulating in a UFO package.
+</Warning>

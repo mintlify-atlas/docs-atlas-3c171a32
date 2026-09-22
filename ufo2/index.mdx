@@ -1,0 +1,195 @@
+---
+title: "UFO 2 Format: Structure and Changes from UFO 1"
+sidebarTitle: "Overview"
+description: "UFO 2, published March 2009, introduced a redesigned fontinfo.plist structure, OpenType feature support via features.fea, and expanded metadata keys."
+---
+
+UFO 2 (Unified Font Object version 2) is a font source file format published in March 2009. It refined and significantly expanded the UFO 1 structure by redesigning `fontinfo.plist` for clarity and adding `features.fea` for OpenType feature definitions. A UFO 2 file is a directory on disk — identifiable by its `.ufo` extension — containing a set of well-defined files and subdirectories, each serving a distinct role in representing a complete typeface.
+
+<Note>
+  UFO 3 is the current recommended version of the specification. If you are starting a new project, use UFO 3. See the [UFO 3 overview](/ufo3/index) for the latest format.
+</Note>
+
+## Directory Structure
+
+Every UFO 2 package follows this layout:
+
+```text
+*.ufo/
+├── metainfo.plist
+├── fontinfo.plist
+├── groups.plist
+├── kerning.plist
+├── features.fea
+├── lib.plist
+└── glyphs/
+    ├── contents.plist
+    └── *.glif
+```
+
+## File Reference
+
+Each file within the UFO 2 package has a unique purpose and data structure. Required files must be present for the package to be valid; optional files may be omitted when the data they represent does not exist.
+
+<CardGroup cols={2}>
+  <Card title="metainfo.plist" icon="circle-info">
+    **Required.** Records the UFO format version (`formatVersion: 2`) and the name of the application or library that created the file. Must be present in every valid UFO 2 package.
+  </Card>
+  <Card title="fontinfo.plist" icon="font">
+    **Optional.** Contains font-level metadata: naming, dimensions, OpenType table fields, PostScript-specific data, and Macintosh FOND resource data. Redesigned from UFO 1.
+  </Card>
+  <Card title="groups.plist" icon="layer-group">
+    **Optional.** Defines arbitrary named groups of glyphs. Group names are unrestricted; glyphs may belong to more than one group. Some groups are used in kerning.
+  </Card>
+  <Card title="kerning.plist" icon="arrows-left-right">
+    **Optional.** Stores kerning pairs as a two-level dictionary mapping left glyph or group names to right glyph or group names and their kerning values.
+  </Card>
+  <Card title="features.fea" icon="code">
+    **Optional.** A plain-text file in [AFDKO FEA syntax](https://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html) containing OpenType feature definitions. Added in UFO 2. Any `include()` paths must be relative to the UFO directory, not to `features.fea` itself.
+  </Card>
+  <Card title="lib.plist" icon="database">
+    **Optional.** A property list dictionary for arbitrary application-specific or user-specific data. Top-level keys must follow reverse domain naming convention (e.g., `com.example.myKey`) to avoid conflicts.
+  </Card>
+  <Card title="glyphs/" icon="pen-nib">
+    **Required.** A directory containing all glyph definitions for the font, each stored as a GLIF 1 XML file. Must include a `contents.plist` mapping glyph names to file names.
+  </Card>
+  <Card title="glyphs/contents.plist" icon="list">
+    **Required (inside glyphs/).** Maps glyph names to their corresponding `.glif` file names. File names are plain names, not paths. A defined algorithm converts glyph names to file-system-safe names.
+  </Card>
+</CardGroup>
+
+## File Descriptions
+
+### metainfo.plist
+
+The `metainfo.plist` file is an XML property list containing exactly two keys. It must be present in every valid UFO 2 package. The `creator` key uses reverse domain naming to identify the creating tool (e.g., `org.robofab.ufoLib`). The `formatVersion` key must be the integer `2` for all UFO 2 files.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>creator</key>
+    <string>org.robofab.ufoLib</string>
+    <key>formatVersion</key>
+    <integer>2</integer>
+</dict>
+</plist>
+```
+
+### groups.plist
+
+Groups are stored as a flat dictionary where each key is a group name and each value is an array of glyph name strings. There is no naming standard for groups. Glyphs listed in a group are not required to exist in the font. Groups used for kerning have special considerations described in the `kerning.plist` documentation.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Group1</key>
+  <array>
+    <string>A</string>
+    <string>A.alt</string>
+  </array>
+  <key>B</key>
+  <array>
+    <string>B</string>
+    <string>B.alt</string>
+  </array>
+</dict>
+</plist>
+```
+
+### kerning.plist
+
+Kerning is stored as a two-level nested dictionary. The outer dictionary keys are left-side glyph or group names; the inner dictionary keys are right-side glyph or group names; values are the kerning amounts as integers or floats. There is no standard prefix to distinguish group names from glyph names — if a name matches a group in `groups.plist`, it is treated as a group reference.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>A</key>
+  <dict>
+    <key>B</key>
+    <integer>-10</integer>
+    <key>X</key>
+    <integer>-10</integer>
+    <key>Z</key>
+    <integer>-15</integer>
+  </dict>
+  <key>X</key>
+  <dict>
+    <key>Q</key>
+    <integer>-10</integer>
+  </dict>
+</dict>
+</plist>
+```
+
+### features.fea
+
+The `features.fea` file is a plain-text file written in AFDKO FEA (Feature File) syntax. It may define OpenType layout features, glyph classes, lookup tables, and more. The file is entirely optional; its absence means no feature data is defined. Note that data in `features.fea` may overlap with or conflict with data in `kerning.plist`, `groups.plist`, and `fontinfo.plist` — synchronization between files is the responsibility of the user and application.
+
+```fea
+@myClass = [a b c];
+
+feature liga {
+  sub f i by fi;
+  sub f l by fl;
+} liga;
+```
+
+### lib.plist
+
+The `lib.plist` file holds arbitrary key-value data at the font level. Any application may store custom data here using a reverse domain key prefix to avoid collisions with data from other applications.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>org.robofab.scripts.SomeData</key>
+  <string>Hello World.</string>
+</dict>
+</plist>
+```
+
+### glyphs/contents.plist
+
+The `contents.plist` file maps every glyph name in the font to the `.glif` file name that stores it. File names are plain names, not paths. Because glyph names are case-sensitive while many file systems are not, a defined naming algorithm is used to avoid collisions — for example, `A` maps to `A_.glif`, and `A.alt` maps to `A_.alt.glif`.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>A</key>
+  <string>A_.glif</string>
+  <key>B</key>
+  <string>B_.glif</string>
+</dict>
+</plist>
+```
+
+## Changes from UFO 1
+
+UFO 2 introduced two significant structural changes from UFO 1:
+
+### fontinfo.plist
+
+The `fontinfo.plist` key structure was completely redesigned for UFO 2 to be cleaner, more organized, and more explicit. The redesign followed two rules:
+
+1. All keys are tagged for the format or OpenType table they represent — for example, `openTypeHheaAscender`.
+2. Keys representing data shared across multiple formats are considered *generic* and carry no format tag — for example, `familyName`.
+
+Many UFO 1 key names were renamed to fit this scheme (e.g., `menuName` became `styleMapFamilyName`, `designer` became `openTypeNameDesigner`). Several new sections were added covering OpenType `head`, `hhea`, `name`, `OS/2`, `vhea`, and PostScript-specific data.
+
+### features.fea
+
+The `features.fea` file was added in UFO 2. UFO 1 had no dedicated file for OpenType feature code; UFO 2 provides a standard location for AFDKO FEA syntax feature definitions at the root of the `.ufo` package.

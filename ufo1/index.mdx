@@ -1,0 +1,150 @@
+---
+title: "UFO 1 Format: The Original Font Package Specification"
+sidebarTitle: "Overview"
+description: "UFO 1, published in 2004, is the original cross-platform font package format — a directory of plists and GLIF files representing a complete font."
+---
+
+UFO 1 is the original Unified Font Object specification, established in 2004. It defines a font as a plain directory bundle with a `.ufo` extension, containing XML property list files for metadata, spacing, kerning, and glyph groups alongside a `glyphs/` subdirectory that holds individual glyph definitions in the Glyph Interchange Format (GLIF). The simplicity of this flat, file-system-based layout made it possible to diff, version-control, and hand-edit fonts without specialised tooling.
+
+<Note>
+  UFO 1 is a historical version. **UFO 3** is the current recommended format and
+  includes significantly expanded capabilities. See the [UFO 3 overview](/ufo3/index)
+  for the full, up-to-date specification.
+</Note>
+
+## Directory Structure
+
+A UFO 1 package is a directory whose name ends in `.ufo`. The top level contains up to six well-known files; the `glyphs/` subdirectory holds every glyph file plus its index.
+
+```
+MyFont.ufo/
+├── metainfo.plist
+├── fontinfo.plist
+├── groups.plist
+├── kerning.plist
+├── lib.plist
+└── glyphs/
+    ├── contents.plist
+    └── *.glif
+```
+
+## Top-Level Files
+
+Each file in a UFO 1 package has a distinct purpose. All files except `metainfo.plist` are optional; if a file is absent, the data it would contain is simply treated as undefined.
+
+| File | Required | Purpose |
+|---|---|---|
+| `metainfo.plist` | **Yes** | Format version number and the name of the application or library that created the UFO. |
+| `fontinfo.plist` | No | Font-level metadata: names, dimensions, style codes, vendor info, and more. |
+| `groups.plist` | No | Arbitrary named groups of glyph names, often used with kerning. |
+| `kerning.plist` | No | Kerning pairs expressed as a two-level dictionary keyed by left then right glyph or group name. |
+| `lib.plist` | No | Arbitrary application- or user-specific data stored under reverse-domain-name keys. |
+| `glyphs/` | No | A directory containing all glyph data for the font. |
+
+## The glyphs Directory
+
+The `glyphs/` directory stores every glyph as a separate `.glif` XML file. A required `contents.plist` index maps human-readable glyph names to their corresponding file names. This separation means tooling can enumerate available glyphs by reading a single small file rather than parsing every `.glif` in the directory.
+
+| File | Purpose |
+|---|---|
+| `glyphs/contents.plist` | Dictionary mapping glyph names (e.g. `A`) to file names (e.g. `A_.glif`). |
+| `glyphs/*.glif` | One XML file per glyph, encoding advance widths, Unicode values, outlines, components, and optional custom data. |
+
+## metainfo.plist
+
+`metainfo.plist` is the only required file in a UFO 1 package. It stores two keys: `creator` (a reverse-domain string identifying the authoring tool) and `formatVersion` (the integer `1` for UFO 1). Readers can inspect this file first to decide how to interpret the rest of the package.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>creator</key>
+    <string>org.robofab.ufoLib</string>
+    <key>formatVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>
+```
+
+## groups.plist
+
+`groups.plist` defines named collections of glyph names. Keys are group names and values are arrays of glyph name strings. Glyphs may belong to more than one group, and groups may reference glyph names that do not exist in the font. Groups are also used as pair members in `kerning.plist`.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Group1</key>
+  <array>
+    <string>A</string>
+    <string>A.alt</string>
+  </array>
+  <key>B</key>
+  <array>
+    <string>B</string>
+    <string>B.alt</string>
+  </array>
+</dict>
+</plist>
+```
+
+## kerning.plist
+
+`kerning.plist` stores kerning data as a two-level nested dictionary. The outer keys are left-side glyph or group names; the inner keys are right-side names; the values are numeric kerning amounts. There is no prefix convention to distinguish glyph names from group names — if a name matches a group defined in `groups.plist`, it is treated as a group reference.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>A</key>
+  <dict>
+    <key>B</key>
+    <integer>-10</integer>
+    <key>X</key>
+    <integer>-10</integer>
+    <key>Z</key>
+    <integer>-15</integer>
+  </dict>
+  <key>X</key>
+  <dict>
+    <key>Q</key>
+    <integer>-10</integer>
+  </dict>
+</dict>
+</plist>
+```
+
+## lib.plist
+
+`lib.plist` is a free-form storage area for application-specific or user-specific data at the font level. To prevent key collisions between different tools, all top-level keys must follow a reverse-domain naming convention (e.g. `com.robofab.AccentBuilder`). Values should be kept as shallow as possible.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>org.robofab.scripts.SomeData</key>
+  <string>Hello World.</string>
+</dict>
+</plist>
+```
+
+## Explore the Specification
+
+<CardGroup cols={2}>
+  <Card title="fontinfo.plist" icon="tag" href="/ufo1/fontinfo">
+    All font-level metadata keys defined in UFO 1, including naming, dimensions,
+    style codes, and vendor information.
+  </Card>
+  <Card title="GLIF Format" icon="pen-nib" href="/ufo1/glif">
+    The original Glyph Interchange Format — XML structure for encoding outlines,
+    components, advance widths, and Unicode values.
+  </Card>
+</CardGroup>

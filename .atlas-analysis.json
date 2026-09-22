@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Unified Font Object (UFO)",
+  "projectType": "general",
+  "projectName": "Unified Font Object (UFO)",
+  "projectDescription": "A cross-platform, cross-application, human-readable, future-proof specification for storing font data in a directory-based format.",
   "theme": "willow",
-  "colors": {
-    "primary": "#e60000",
-    "light": "#ffffff",
-    "dark": "#f47c7c"
-  },
-  "favicon": "https://media.brand.dev/4f076121-418e-46d3-90b6-4ee53f37ee06.svg",
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/unified-font-object/ufo-spec"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/unified-font-object/ufo-spec"
-    }
-  },
+  "primaryColor": "#e60000",
+  "lightColor": "#ffffff",
+  "darkColor": "#f47c7c",
   "navigation": {
     "tabs": [
       {
@@ -109,5 +96,31 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Human-readable, plain-text XML-based font storage format",
+    "Cross-platform and application-independent design",
+    "Multi-layer glyph support (UFO 3)",
+    "Comprehensive font metadata via fontinfo.plist",
+    "Kerning pair groups with exception model",
+    "OpenType feature file (features.fea) integration",
+    "Extensible via lib.plist and data directory using reverse-domain keys",
+    "Object identifiers for precise cross-tool referencing",
+    "ZIP archive packaging option (UFO ZIP / .ufoz)",
+    "Versioned specification (UFO 1, 2, 3, UFO 4 in development)"
+  ],
+  "publicApiSurface": [
+    "metainfo.plist — format version and creator",
+    "fontinfo.plist — font identification, metrics, OpenType table fields",
+    "groups.plist — glyph groups with public.kern1.*/public.kern2.* kerning prefixes",
+    "kerning.plist — horizontal kerning pairs (glyph-glyph, glyph-group, group-group)",
+    "features.fea — OpenType feature definitions (plain text)",
+    "lib.plist — arbitrary serializable data under reverse-domain keys",
+    "layercontents.plist — glyph directory to layer name mapping (UFO 3)",
+    "glyphs/contents.plist — glyph name to file name mapping",
+    "glyphs/layerinfo.plist — layer color and lib (UFO 3)",
+    "glyphs/*.glif — GLIF XML format (advance, unicode, outline, anchors, guidelines, image, lib)",
+    "images/ — PNG images referenced by glyphs (UFO 3)",
+    "data/ — arbitrary binary/structured data under reverse-domain directory keys (UFO 3)"
+  ]
 }

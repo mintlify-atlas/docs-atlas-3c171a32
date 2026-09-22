@@ -1,0 +1,234 @@
+---
+title: "UFO 1 fontinfo.plist: Complete Font Metadata Reference"
+sidebarTitle: "fontinfo.plist"
+description: "UFO 1's fontinfo.plist uses a flat dictionary of keys covering naming, dimensions, style codes, and vendor data for a complete font metadata record."
+---
+
+`fontinfo.plist` is an optional XML property list that sits at the root of a UFO 1 package. It holds descriptive and technical metadata about the font itself — family and style names, metric values, PostScript and TrueType identifiers, licensing text, and more. The data is stored as a single flat dictionary; every key is optional, so tools may include only the subset they understand.
+
+<Note>
+  The flat key structure used here was significantly redesigned in UFO 2, which
+  introduced a richer naming model, expanded OS/2 support, and additional metric
+  groups. See [UFO 2 fontinfo.plist](/ufo2/fontinfo) for the updated specification.
+</Note>
+
+## File Format
+
+`fontinfo.plist` is an [XML Property List](http://www.apple.com/DTDs/PropertyList-1.0.dtd). The top-level object is a `<dict>` whose keys and value types are defined below.
+
+## Specification
+
+The following tables document every key defined in UFO 1's `fontinfo.plist`. All keys are optional; omitting a key is equivalent to leaving that value undefined.
+
+### Identity and Naming
+
+<ParamField path="familyName" type="string">
+  The family name of the font.
+</ParamField>
+
+<ParamField path="fontName" type="string">
+  The PostScript font name.
+</ParamField>
+
+<ParamField path="fullName" type="string">
+  The full human-readable name of the font.
+</ParamField>
+
+<ParamField path="menuName" type="string">
+  The name shown in application font menus.
+</ParamField>
+
+<ParamField path="styleName" type="string">
+  The style name (e.g. "Regular", "Bold Italic").
+</ParamField>
+
+<ParamField path="otFamilyName" type="string">
+  OpenType-specific preferred family name.
+</ParamField>
+
+<ParamField path="otStyleName" type="string">
+  OpenType-specific preferred subfamily name.
+</ParamField>
+
+<ParamField path="otMacName" type="string">
+  Macintosh- and OpenType-specific compatible full name.
+</ParamField>
+
+<ParamField path="fondName" type="string">
+  Macintosh OS FOND resource name.
+</ParamField>
+
+<ParamField path="fondID" type="integer">
+  Macintosh OS FOND resource ID number.
+</ParamField>
+
+### Style Classification
+
+<ParamField path="fontStyle" type="integer">
+  Numeric style code. `64` = Regular, `1` = Italic, `32` = Bold, `33` = Bold Italic.
+</ParamField>
+
+<ParamField path="weightName" type="string">
+  The weight name string. Corresponds to the OpenType OS/2 `usWeightClass` field names (e.g. "Regular", "Bold").
+</ParamField>
+
+<ParamField path="weightValue" type="integer">
+  Numeric weight value. Corresponds to the OpenType OS/2 `usWeightClass` field values (e.g. `400` for Regular, `700` for Bold).
+</ParamField>
+
+<ParamField path="widthName" type="string">
+  Width descriptor string. Corresponds to the OpenType OS/2 `usWidthClass` field names (e.g. "Normal", "Condensed").
+</ParamField>
+
+<ParamField path="italicAngle" type="float">
+  The italic angle in counter-clockwise degrees from the vertical.
+</ParamField>
+
+<ParamField path="slantAngle" type="float">
+  The slant angle of the font.
+</ParamField>
+
+<ParamField path="msCharSet" type="integer">
+  Microsoft character set flag.
+</ParamField>
+
+### Dimensions and Metrics
+
+<ParamField path="unitsPerEm" type="integer or float">
+  The number of design units per em.
+</ParamField>
+
+<ParamField path="ascender" type="integer or float">
+  The ascender value in design units.
+</ParamField>
+
+<ParamField path="descender" type="integer or float">
+  The descender value in design units. Typically a negative number.
+</ParamField>
+
+<ParamField path="capHeight" type="integer or float">
+  The cap height value in design units.
+</ParamField>
+
+<ParamField path="defaultWidth" type="integer or float">
+  The default advance width for new glyphs, used as a starting value by glyph editors.
+</ParamField>
+
+### Versioning
+
+<ParamField path="versionMajor" type="integer">
+  The major version number of the font.
+</ParamField>
+
+<ParamField path="versionMinor" type="integer">
+  The minor version number of the font.
+</ParamField>
+
+### Identification
+
+<ParamField path="uniqueID" type="integer">
+  PostScript unique ID number.
+</ParamField>
+
+<ParamField path="ttUniqueID" type="string">
+  Unique ID string for TrueType fonts.
+</ParamField>
+
+<ParamField path="ttVendor" type="string">
+  Four-character vendor code, as registered with Microsoft.
+</ParamField>
+
+<ParamField path="ttVersion" type="string">
+  TrueType version string.
+</ParamField>
+
+### People and Organisations
+
+<ParamField path="designer" type="string">
+  Name of the type designer.
+</ParamField>
+
+<ParamField path="designerURL" type="string">
+  URL for the designer's website.
+</ParamField>
+
+<ParamField path="createdBy" type="string">
+  Creator of the font — typically the foundry name.
+</ParamField>
+
+<ParamField path="vendorURL" type="string">
+  URL for the font vendor's website.
+</ParamField>
+
+### Legal
+
+<ParamField path="copyright" type="string">
+  Copyright statement for the font.
+</ParamField>
+
+<ParamField path="trademark" type="string">
+  Trademark statement for the font.
+</ParamField>
+
+<ParamField path="license" type="string">
+  Full license text for the font.
+</ParamField>
+
+<ParamField path="licenseURL" type="string">
+  URL pointing to the license for the font.
+</ParamField>
+
+### Miscellaneous
+
+<ParamField path="notice" type="string">
+  A general notice about the font.
+</ParamField>
+
+<ParamField path="note" type="string">
+  Arbitrary notes about the font, intended for internal use.
+</ParamField>
+
+## Complete Key Reference
+
+The table below provides a compact view of all keys, their types, and descriptions for quick reference.
+
+| Key | Type | Description |
+|---|---|---|
+| `ascender` | integer or float | Ascender value. |
+| `capHeight` | integer or float | Cap height value. |
+| `copyright` | string | Copyright statement. |
+| `createdBy` | string | Creator of the font, for example the foundry. |
+| `defaultWidth` | integer or float | Value for the width of new glyphs. |
+| `descender` | integer or float | Descender value. |
+| `designer` | string | Name of the designer. |
+| `designerURL` | string | URL for the designer. |
+| `familyName` | string | Family name. |
+| `fondID` | integer | Macintosh OS FOND resource number. |
+| `fondName` | string | Macintosh OS FOND name. |
+| `fontName` | string | PostScript font name. |
+| `fontStyle` | integer | Style code. 64=regular, 1=italic, 32=bold, 33=bold italic. |
+| `fullName` | string | Full name. |
+| `italicAngle` | float | Italic angle. |
+| `license` | string | License text. |
+| `licenseURL` | string | URL for the license. |
+| `menuName` | string | Menu name. |
+| `msCharSet` | integer | MS Char Set flag. |
+| `note` | string | Arbitrary notes about the font. |
+| `notice` | string | A notice about the font. |
+| `otFamilyName` | string | OpenType specific family name. |
+| `otMacName` | string | Macintosh and OpenType specific name. |
+| `otStyleName` | string | OpenType specific style name. |
+| `slantAngle` | float | Slant angle. |
+| `styleName` | string | Style name. |
+| `trademark` | string | Trademark statement. |
+| `ttUniqueID` | string | Unique ID for TrueType fonts. |
+| `ttVendor` | string | Four character vendor code. |
+| `ttVersion` | string | TrueType version string. |
+| `uniqueID` | integer | PostScript ID number. |
+| `unitsPerEm` | integer or float | Units per em. |
+| `vendorURL` | string | URL for the font vendor. |
+| `versionMajor` | integer | Major version. |
+| `versionMinor` | integer | Minor version. |
+| `weightName` | string | The weight name. Corresponds with the OpenType OS/2 `usWeightClass` field names. |
+| `weightValue` | integer | Numeric weight value. Corresponds with the OpenType OS/2 `usWeightClass` field values. |
+| `widthName` | string | Corresponds with the OpenType OS/2 `usWidthClass` field names. |

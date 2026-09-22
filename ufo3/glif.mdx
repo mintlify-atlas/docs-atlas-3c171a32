@@ -1,0 +1,476 @@
+---
+title: "GLIF: Glyph Interchange Format XML Specification"
+sidebarTitle: "GLIF"
+description: "GLIF is the XML file format for individual UFO glyphs, storing outlines, advance widths, unicode values, anchors, guidelines, images, and custom lib data."
+---
+
+The Glyph Interchange Format (GLIF) is a simple, human-readable XML representation of a single glyph. Every glyph in a UFO layer is stored as a separate `.glif` file. GLIF version 2 is defined by the UFO 3 specification, though tools may also encounter GLIF version 1 files from UFO 2. In all elements, attributes that have a defined default value are optional unless stated otherwise — if an attribute is absent, its value is implicitly the default.
+
+## Data Structure
+
+A GLIF file is organized as a tree rooted at the `glyph` element. The diagram below shows all possible child elements and their nesting:
+
+```text
+glyph
+├── advance
+├── unicode
+├── note
+├── image
+├── guideline
+├── anchor
+├── outline
+│   ├── contour
+│   │   └── point
+│   └── component
+└── lib
+```
+
+## Elements
+
+### `glyph` — Top-Level Element
+
+The `glyph` element is the root element of every GLIF file.
+
+#### Attributes
+
+<ParamField body="name" type="string" required>
+  The name of the glyph. Must be at least one character long with no maximum length. Must not contain control characters. When reading GLIF files, this attribute should be ignored in favor of the name stored in `contents.plist`, since manual edits may cause a mismatch.
+</ParamField>
+
+<ParamField body="format" type="integer" required>
+  The major format version. Must be `2` for UFO 3 GLIF files.
+</ParamField>
+
+<ParamField body="formatMinor" type="integer">
+  The minor format version. Optional when the minor version is `0`; must be present when the minor version is not `0`.
+</ParamField>
+
+#### Child Elements
+
+| Element | Occurrences |
+|---------|-------------|
+| `advance` | At most once |
+| `unicode` | Any number of times |
+| `note` | At most once |
+| `image` | At most once |
+| `guideline` | Any number of times |
+| `anchor` | Any number of times |
+| `outline` | At most once |
+| `lib` | At most once |
+
+---
+
+### `advance` — Horizontal and Vertical Metrics
+
+The `advance` element stores the advance width and/or vertical advance for the glyph. It may occur at most once.
+
+#### Attributes
+
+<ParamField body="width" type="integer or float" default="0">
+  The horizontal advance width. Optional if `height` is defined.
+</ParamField>
+
+<ParamField body="height" type="integer or float" default="0">
+  The vertical advance. Optional if `width` is defined.
+</ParamField>
+
+#### Example
+
+```xml
+<advance width="400" />
+```
+
+---
+
+### `unicode` — Unicode Code Point
+
+The `unicode` element records a Unicode value assigned to this glyph. It may occur any number of times. The first occurrence defines the primary Unicode value; values should not be repeated.
+
+#### Attributes
+
+<ParamField body="hex" type="string" required>
+  A Unicode code point as a hexadecimal number. The string is case-insensitive and must contain the hex digits without any prefix (e.g., no `U+` or `0x`).
+</ParamField>
+
+#### Example
+
+```xml
+<unicode hex="0041" />
+```
+
+---
+
+### `note` — Glyph Note
+
+The `note` element is a freeform text container for any user-defined commentary about the glyph. There is no standardized internal structure; the note is simply the text content of the element. It may occur at most once.
+
+---
+
+### `image` — Image Reference
+
+The `image` element embeds a reference to a PNG image associated with the glyph. The image is always considered to be behind the outline layer. It may occur at most once.
+
+#### Attributes
+
+<ParamField body="fileName" type="string" required>
+  The image filename including any extension. Must be a plain filename, not an absolute or relative path. All images must be in PNG format.
+</ParamField>
+
+<ParamField body="xScale" type="integer or float" default="1">
+  The x-axis scale component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="xyScale" type="integer or float" default="0">
+  The xy shear component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yxScale" type="integer or float" default="0">
+  The yx shear component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yScale" type="integer or float" default="1">
+  The y-axis scale component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="xOffset" type="integer or float" default="0">
+  The x translation component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yOffset" type="integer or float" default="0">
+  The y translation component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="color" type="string">
+  A color to apply to the image, specified as a comma-separated `red,green,blue,alpha` string with values between 0 and 1 (e.g., `1,0,0,.5`). If absent, the image's own colors are used unless a layer-level color is defined in `layerinfo.plist`.
+</ParamField>
+
+The six transform attributes (`xScale, xyScale, yxScale, yScale, xOffset, yOffset`) together form an affine transformation matrix `[xScale xyScale yxScale yScale xOffset yOffset]`. The default is the identity matrix `[1 0 0 1 0 0]`. One image width unit equals one horizontal font unit and one image height unit equals one vertical font unit before the transformation is applied.
+
+#### Example
+
+```xml
+<image fileName="Sketch 1.png" xOffset="100" yOffset="200"
+    xScale=".75" yScale=".75" color="1,0,0,.5" />
+```
+
+---
+
+### `guideline` — Reference Guideline
+
+A `guideline` element describes a reference line used during design. It may occur any number of times.
+
+#### Attributes
+
+<ParamField body="x" type="integer or float">
+  The x coordinate of the guideline's origin point. Optional if `y` is provided and `angle` is not provided; in that case the guideline is horizontal.
+</ParamField>
+
+<ParamField body="y" type="integer or float">
+  The y coordinate of the guideline's origin point. Optional if `x` is provided and `angle` is not provided; in that case the guideline is vertical.
+</ParamField>
+
+<ParamField body="angle" type="integer or float">
+  The angle of the guideline in degrees, measured counter-clockwise from the horizontal, between 0 and 360. Must not be specified when neither `x` nor `y` is specified.
+</ParamField>
+
+<ParamField body="name" type="string">
+  An arbitrary label for the guideline. Must be at least one character long with no maximum length. Must not contain control characters.
+</ParamField>
+
+<ParamField body="color" type="string">
+  A display color for the guideline in `red,green,blue,alpha` string format.
+</ParamField>
+
+<ParamField body="identifier" type="string">
+  A unique identifier string for the guideline (1–100 printable ASCII characters, 0x20–0x7E). Must be unique among all identifiers within the glyph. Once assigned, an identifier must not be removed or changed unnecessarily.
+</ParamField>
+
+The guideline extends to infinity in both directions from the point defined by `x` and `y` along `angle`. If `y` and `angle` are omitted, the result is a vertical guideline. If `x` and `angle` are omitted, the result is a horizontal guideline.
+
+---
+
+### `anchor` — Reference Position
+
+An `anchor` element records a named reference point — commonly used for mark attachment, ligature carets, and other attachment-based features. It may occur any number of times.
+
+#### Attributes
+
+<ParamField body="x" type="integer or float" required>
+  The x coordinate of the anchor.
+</ParamField>
+
+<ParamField body="y" type="integer or float" required>
+  The y coordinate of the anchor.
+</ParamField>
+
+<ParamField body="name" type="string">
+  An arbitrary name for the anchor. Must be at least one character long with no maximum length. Must not contain control characters.
+</ParamField>
+
+<ParamField body="color" type="string">
+  A display color for the anchor in `red,green,blue,alpha` string format.
+</ParamField>
+
+<ParamField body="identifier" type="string">
+  A unique identifier string (1–100 printable ASCII characters). Must be unique among all identifiers within the glyph.
+</ParamField>
+
+#### Ligature Caret Naming Conventions
+
+Anchors with names beginning with `caret_` indicate horizontal ligature caret positions (the `x` value is used; `y` is ignored). Anchors with names beginning with `vcaret_` indicate vertical ligature caret positions (the `y` value is used; `x` is ignored). A ligature with N components must have exactly N−1 caret anchors.
+
+<Info>
+  In GLIF 1, anchors were represented as contours containing a single `move` point. When converting GLIF 1 to GLIF 2, these contours may be converted to `anchor` elements: the point's `x`, `y`, and `name` attributes map directly to the anchor element's attributes.
+</Info>
+
+---
+
+### `outline` — Outline Description
+
+The `outline` element is the container for all contour and component data. It may occur at most once. An empty `outline` element is semantically equivalent to the element not being present.
+
+This element has no attributes. Its children may be any combination of `contour` and `component` elements.
+
+---
+
+### `contour` — Contour Description
+
+A `contour` element describes one closed or open path. It may occur any number of times within `outline`. An empty `contour` is semantically equivalent to the element not being present.
+
+#### Attributes
+
+<ParamField body="identifier" type="string">
+  A unique identifier for the contour (1–100 printable ASCII characters). Must be unique among all identifiers in the glyph. Once assigned, should be preserved through outline manipulation operations such as path direction changes and remove overlap.
+</ParamField>
+
+#### Child Elements
+
+A `contour` contains any number of `point` elements.
+
+<Note>
+  A contour is not required to contain an on-curve point. A contour consisting entirely of off-curve points is treated as a quadratic curve.
+</Note>
+
+---
+
+### `point` — Attributed Coordinate Pair
+
+Each `point` element within a `contour` describes one node of the path.
+
+#### Attributes
+
+<ParamField body="x" type="integer or float" required>
+  The x coordinate of the point.
+</ParamField>
+
+<ParamField body="y" type="integer or float" required>
+  The y coordinate of the point.
+</ParamField>
+
+<ParamField body="type" type="string" default="offcurve">
+  The point and/or segment type. See the table below for all valid values.
+</ParamField>
+
+<ParamField body="smooth" type="string" default="no">
+  When set to `yes`, signifies that a smooth curvature should be maintained at this on-curve point (a curve point or tangent point). Must only be set on on-curve point types (`move`, `line`, `curve`, `qcurve`).
+</ParamField>
+
+<ParamField body="name" type="string">
+  An arbitrary label for the point. Does not need to be unique within the contour or outline. Must be at least one character long and must not contain control characters.
+</ParamField>
+
+<ParamField body="identifier" type="string">
+  A unique identifier string (1–100 printable ASCII characters). Must be unique among all identifiers in the glyph.
+</ParamField>
+
+#### Point Types
+
+| Type | Description |
+|------|-------------|
+| `move` | Must be the first point in a contour and signals the beginning of an **open** contour. A contour that starts with `move` is open; one that does not start with `move` is a closed, cyclic path. |
+| `line` | Draw a straight line from the previous point to this point. The previous point must be `move`, `line`, `curve`, or `qcurve` — not `offcurve`. |
+| `offcurve` | This point is an off-curve control point for a curve segment ending at the next `curve` or `qcurve` point. |
+| `curve` | Draw a cubic Bézier curve from the last non-`offcurve` point to this point. Zero preceding off-curves produces a straight line; one produces a quadratic curve; two produces a full cubic Bézier. |
+| `qcurve` | Draw a quadratic curve using the TrueType implied on-curve points principle. Zero preceding off-curves draws a straight line from the last non-`offcurve` point. |
+
+#### Examples
+
+<Tabs>
+  <Tab title="move">
+    ```xml
+    <point x="433" y="371" type="move" />
+    ```
+  </Tab>
+  <Tab title="line">
+    ```xml
+    <point x="433" y="371" type="line" />
+    ```
+  </Tab>
+  <Tab title="offcurve">
+    ```xml
+    <point x="433" y="366" />
+    ```
+  </Tab>
+  <Tab title="curve">
+    ```xml
+    <point x="441" y="363" type="curve" smooth="yes" />
+    ```
+  </Tab>
+  <Tab title="qcurve">
+    ```xml
+    <point x="441" y="363" type="qcurve" />
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### `component` — Inserted Glyph Reference
+
+A `component` element references another glyph and inserts its outline as part of the current glyph's outline. It may occur any number of times within `outline`. Components must only reference glyphs within the same layer. Circular references are not permitted.
+
+#### Attributes
+
+<ParamField body="base" type="string" required>
+  The name of the base glyph to reference.
+</ParamField>
+
+<ParamField body="xScale" type="integer or float" default="1">
+  The x-axis scale component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="xyScale" type="integer or float" default="0">
+  The xy shear component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yxScale" type="integer or float" default="0">
+  The yx shear component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yScale" type="integer or float" default="1">
+  The y-axis scale component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="xOffset" type="integer or float" default="0">
+  The x translation component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="yOffset" type="integer or float" default="0">
+  The y translation component of the affine transformation matrix.
+</ParamField>
+
+<ParamField body="identifier" type="string">
+  A unique identifier for the component (1–100 printable ASCII characters). Must be unique among all identifiers in the glyph. Once assigned, must not be removed or changed unnecessarily.
+</ParamField>
+
+The six transform attributes form the affine matrix `[xScale xyScale yxScale yScale xOffset yOffset]`. The default is the identity transformation `[1 0 0 1 0 0]`.
+
+#### Example
+
+```xml
+<component base="A" xOffset="100" />
+```
+
+---
+
+### `lib` — Custom Data Storage
+
+The `lib` element stores authoring-tool-specific, user-specific, or otherwise arbitrary data for the glyph. It may occur at most once. Its single child element must be a `dict` formatted as an XML property list. Top-level keys should follow the [reverse domain naming scheme](https://en.wikipedia.org/wiki/Reverse-DNS) to prevent conflicts. The `public.*` key namespace is reserved for standardized lib keys.
+
+#### Standardized Lib Keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `public.markColor` | string | A color definition string representing the "mark" color shown in font editors. |
+| `public.truetype.instructions` | dict | TrueType hinting instructions assembly code for the glyph. |
+| `public.truetype.overlap` | boolean | When `true`, indicates glyph contours or components may overlap (sets OVERLAP_SIMPLE or OVERLAP_COMPOUND flags). |
+| `public.verticalOrigin` | integer or float | The vertical origin y coordinate used for vertical layout. |
+| `public.postscript.hints` | dict | PostScript hint data for the glyph. |
+| `public.objectLibs` | dict | Object-level lib data keyed by object identifiers for individual contours, points, components, anchors, or guidelines. |
+
+---
+
+## Complete Example
+
+The following is a complete GLIF 2 file for a glyph named "period", demonstrating most elements in combination:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="period" format="2">
+  <advance width="268"/>
+  <unicode hex="002E"/>
+  <image fileName="period sketch.png" xScale="0.5" yScale="0.5"/>
+  <guideline y="-12" name="overshoot"/>
+  <anchor x="74" y="197" name="top"/>
+  <outline>
+    <contour identifier="vMlVuTQd4d">
+      <point x="237" y="152"/>
+      <point x="193" y="187"/>
+      <point x="134" y="187" type="curve" smooth="yes" identifier="KN3WZjorob"/>
+      <point x="74" y="187"/>
+      <point x="30" y="150"/>
+      <point x="30" y="88" type="curve" smooth="yes"/>
+      <point x="30" y="23"/>
+      <point x="74" y="-10"/>
+      <point x="134" y="-10" type="curve" smooth="yes"/>
+      <point x="193" y="-10"/>
+      <point x="237" y="25"/>
+      <point x="237" y="88" type="curve" smooth="yes" identifier="h0ablXAzTg"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.letterror.somestuff</key>
+      <string>arbitrary custom data!</string>
+      <key>public.markColor</key>
+      <string>1,0,0,0.5</string>
+      <key>public.objectLibs</key>
+      <dict>
+        <key>KN3WZjorob</key>
+        <dict>
+          <key>com.foundry.pointColor</key>
+          <string>0,1,0,0.5</string>
+        </dict>
+        <key>h0ablXAzTg</key>
+        <dict>
+          <key>com.foundry.pointColor</key>
+          <string>1,0,0,0.5</string>
+        </dict>
+        <key>vMlVuTQd4d</key>
+        <dict>
+          <key>com.foundry.contourColor</key>
+          <string>1,0,0,0.5</string>
+        </dict>
+      </dict>
+      <key>public.postscript.hints</key>
+      <dict>
+        <key>formatVersion</key>
+        <string>1</string>
+        <key>hintSetList</key>
+        <array>
+          <dict>
+            <key>pointTag</key>
+            <string>hintSet0000</string>
+            <key>stems</key>
+            <array>
+              <string>hstem -10 197</string>
+              <string>vstem 30 207</string>
+            </array>
+          </dict>
+          <dict>
+            <key>pointTag</key>
+            <string>hintSet0004</string>
+            <key>stems</key>
+            <array>
+              <string>hstem 11 -21</string>
+              <string>vstem 30 207</string>
+            </array>
+          </dict>
+        </array>
+        <key>id</key>
+        <string>w268c237,88 237,152 193,187c134,187 74,187 30,150c30,88 30,23 74,-10c134,-10 193,-10 237,25</string>
+      </dict>
+    </dict>
+  </lib>
+</glyph>
+```

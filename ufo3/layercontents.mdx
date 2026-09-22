@@ -1,0 +1,85 @@
+---
+title: "layercontents.plist: Glyph Layer Directory Mapping"
+sidebarTitle: "layercontents.plist"
+description: "layercontents.plist maps every glyph layer name to its directory path within a UFO, defines layer order, and is required in every UFO 3 font."
+---
+
+The `layercontents.plist` file is a required XML property list at the root of every UFO 3 package. It serves as the authoritative registry that links human-readable layer names to the `glyphs.*` directories on disk, and also defines the stacking order of layers from top to bottom.
+
+<Note>
+  This file is **required**. Every UFO 3 font must contain a valid `layercontents.plist`, even if only one layer is present.
+</Note>
+
+## File Format
+
+`layercontents.plist` is an [XML Property List](http://www.apple.com/DTDs/PropertyList-1.0.dtd). The top-level object is an array of two-element arrays. Each inner array contains, in order:
+
+1. The **layer name** (a string)
+2. The **directory name** (a string)
+
+The position of each inner array within the outer array determines the layer's order — the first entry is the topmost layer and the last entry is the bottommost.
+
+## Structure
+
+<ParamField body="layerName" type="string" required>
+  The user-visible name of the layer. Layer names may contain any character except control characters (U+0000–U+001F, U+007F, U+0080–U+009F). They must be at least one character long with no maximum length. Layer names must be unique within the font. The namespace `public.*` is reserved for standardized layer names.
+</ParamField>
+
+<ParamField body="directoryName" type="string" required>
+  The name of the directory inside the UFO package that holds this layer's glyph files. Must be a plain directory name — not an absolute or relative path — and must include the `glyphs.` prefix for all layers other than the required default layer. Each directory name must be unique within the font. Directory names are case-sensitive in the plist but many file systems are not, so care must be taken when choosing names.
+</ParamField>
+
+## Required Default Layer
+
+Every UFO must contain a default glyph set stored in the directory named `glyphs` (no suffix). This layer may have any user-defined name. If the layer has no user-defined name, the reserved name `public.default` must be used.
+
+<Warning>
+  The default layer directory must always be named exactly `glyphs`. No other layer directory may use this name. All additional layer directories must begin with `glyphs.` followed by a unique string.
+</Warning>
+
+## Layer Ordering
+
+The order of entries in `layercontents.plist` is significant. Layers are listed from top to bottom. Authoring tools must preserve the existing order and directory names when writing into an existing UFO. Read the existing `layercontents.plist` before performing any write operation so that directory names can be referenced and maintained.
+
+## Common Layer Registry
+
+The UFO specification reserves the `public.*` namespace for standardized layer names. The following names are officially registered:
+
+<CardGroup cols={2}>
+  <Card title="public.default" icon="layer-group">
+    Indicates the default layer has no user-defined name. Must not be used as the name for any layer other than the one stored in the `glyphs` directory.
+  </Card>
+  <Card title="public.background" icon="clone">
+    Represents background reference layers — equivalent to the "Template" layer in Fontographer, the "Mask" layer in FontLab, or the "Background" layer in FontForge.
+  </Card>
+</CardGroup>
+
+## Example
+
+The following example shows a font with three layers: the required default layer, a custom "Sketches" layer, and a standardized background layer.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+  <array>
+    <string>public.default</string>
+    <string>glyphs</string>
+  </array>
+  <array>
+    <string>Sketches</string>
+    <string>glyphs.S_ketches</string>
+  </array>
+  <array>
+    <string>public.background</string>
+    <string>glyphs.public.background</string>
+  </array>
+</array>
+</plist>
+```
+
+<Tip>
+  Notice that the "Sketches" layer directory is named `glyphs.S_ketches` — the uppercase `S` has been followed by an underscore. This reflects the common user-name-to-file-name algorithm that inserts an underscore after each uppercase character to produce case-insensitive-safe filenames.
+</Tip>

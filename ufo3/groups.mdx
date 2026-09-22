@@ -1,0 +1,102 @@
+---
+title: "groups.plist: Glyph Group Definitions and Kerning Groups"
+sidebarTitle: "groups.plist"
+description: "Reference for groups.plist, which defines named glyph groups including kerning groups identified by the public.kern1 and public.kern2 prefixes."
+---
+
+The `groups.plist` file defines arbitrary named collections of glyphs within a UFO. These groups can be used for a variety of purposes — from organizational categories to kerning side definitions. The file is an XML Property List and is **optional**; if it is absent, there is no group data for the font.
+
+## File Format
+
+The property list data consists of a **dictionary at the top level**. Keys are group names and values are arrays of glyph name strings. Group names must contain one or more characters with no length limit; any character except control characters may be used.
+
+The pattern `public.*` (where `*` is one or more characters) is **reserved** for standardized group names defined by the UFO specification. Custom or tool-specific group names should use reverse-domain naming (e.g., `com.example.myGroup`) to avoid conflicts.
+
+<Note>
+  With the exception of kerning groups (described below), a glyph may appear in more than one group and may even appear more than once within the same group. Glyphs listed in groups are not required to be present in the font.
+</Note>
+
+---
+
+## Kerning Groups
+
+Groups may be used as members of kerning pairs in `kerning.plist`. Kerning groups are divided into two types based on which side of a pair they occupy:
+
+- **First-side groups** — used as the first (left in LTR, right in RTL) member of a kerning pair. Names must begin with the prefix `public.kern1.`.
+- **Second-side groups** — used as the second (right in LTR, left in RTL) member of a kerning pair. Names must begin with the prefix `public.kern2.`.
+
+One or more characters must follow the prefix; the characters after the prefix are up to the designer or tool. There is no requirement that the prefixes be visible to users in an authoring tool UI, nor is there a requirement that prefixes be preserved when kerning is converted to another format (such as an OpenType kern feature in `features.fea`).
+
+---
+
+## Kerning Group Rules
+
+### Rule 1: Names must begin with the appropriate prefix
+
+Kerning group names must begin with `public.kern1.` or `public.kern2.` as appropriate. This eliminates ambiguity when resolving kerning pairs.
+
+### Rule 2: Only kerning groups may use the kerning prefixes
+
+Any group whose name begins with `public.kern1.` or `public.kern2.` is treated as a kerning group. No other group may use these prefixes.
+
+### Rule 3: Kerning groups are not required to appear in kerning pairs
+
+A kerning group may exist without any corresponding pair in `kerning.plist`. Unreferenced groups are valid and can serve a purpose — for example, when generating an OpenType kern feature.
+
+### Rule 4: Glyphs must not appear in more than one kerning group per side
+
+<Warning>
+  A glyph must not appear in more than one `public.kern1.*` group, and must not appear in more than one `public.kern2.*` group. Violating this rule creates an unresolvable ambiguity during kerning lookup.
+</Warning>
+
+For example, consider these two groups:
+
+| Group name       | Group members                |
+|------------------|------------------------------|
+| public.kern1.A1  | A, Aacute, Agrave, Adieresis |
+| public.kern1.A2  | A, Acircumflex               |
+
+And these kerning pairs:
+
+| Side 1           | Side 2 | Value |
+|------------------|--------|-------|
+| public.kern1.A1  | T      | -50   |
+| public.kern1.A2  | T      | -100  |
+
+When resolving the pair **A + T**, the lookup finds `A` in both `public.kern1.A1` and `public.kern1.A2`, yielding two possible values (−50 and −100) with no way to determine which is correct. Placing each glyph in only one group per side eliminates this ambiguity entirely.
+
+### Rule 5: Glyphs should not appear more than once in a single kerning group
+
+Any appearances of a glyph after its first appearance in a group must be ignored by authoring tools. Duplicate entries in a kerning group provide no additional information and may be silently discarded.
+
+---
+
+## Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>public.kern1.A</key>
+  <array>
+    <string>A</string>
+    <string>Aacute</string>
+    <string>Acircumflex</string>
+  </array>
+  <key>Group1</key>
+  <array>
+    <string>A</string>
+    <string>A.alt</string>
+  </array>
+  <key>B</key>
+  <array>
+    <string>B</string>
+    <string>B.alt</string>
+  </array>
+</dict>
+</plist>
+```
+
+In this example, `public.kern1.A` is a kerning group (first side) containing three glyphs. `Group1` and `B` are non-kerning groups that can be used freely for other organizational purposes. Notice that `A` appears in both `public.kern1.A` and `Group1` — this is permitted for non-kerning groups.

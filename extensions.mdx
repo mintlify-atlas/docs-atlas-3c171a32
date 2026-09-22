@@ -1,0 +1,121 @@
+---
+title: "Extending UFO: Custom Data Storage and Object Identifiers"
+sidebarTitle: "Extensions"
+description: "How to safely store custom tool data in UFO files using libs, the data directory, reverse domain naming keys, and object identifiers without conflicting with other tools."
+---
+
+Very often, a user or developer needs to store data in a UFO that is not part of the official specification. Inserting this data into an arbitrary location will likely result in data loss and unexpected behaviour in UFO readers. The specification therefore designates specific areas where such data can be safely stored and retrieved without causing problems. The implementation details of these locations and techniques are officially defined in the UFO specification versions.
+
+## Storage Locations
+
+When you need to store custom data, there are two designated approaches: **libs** and the **data directory**. The nature of the data you need to store will determine which location is appropriate.
+
+<CardGroup cols={2}>
+  <Card title="Lib" icon="list-tree">
+    Ideal for structured, serializable data associated with font, glyph, or layer objects. Available in UFO 1 and later.
+  </Card>
+  <Card title="Data Directory" icon="folder-open">
+    Ideal for binary or non-property-list data (e.g. images, large blobs). Introduced in UFO 3.
+  </Card>
+</CardGroup>
+
+### Lib
+
+Data that can be serialized may be stored in the object libs. Font and glyph level files contain lib locations in UFO 1 and later. Layer level files contain lib locations in UFO 3 and later. Lower-level objects have a pseudo lib in UFO 3 and will have official lib locations in UFO 4.
+
+Libs are most useful for storing data that is directly related to the objects they are associated with. For example, a foundry might have an internal production tool with the following settings for a given font:
+
+- decompose components: no
+- remove overlap: yes
+- round to integers: no
+- autohint: yes
+
+This data can be stored in `lib.plist` under a reverse domain name key, like so:
+
+```xml
+<key>com.somefoundry.productionTool</key>
+<dict>
+  <key>autohint</key>
+  <true/>
+  <key>decomposeComponents</key>
+  <false/>
+  <key>removeOverlap</key>
+  <true/>
+  <key>roundToIntegers</key>
+  <false/>
+</dict>
+```
+
+### Data Directory
+
+The data directory was added to the specification in UFO 3. It allows for storing data that is not suited to an object lib or that cannot be represented in a property list — for example, binary image files. If a tool composes a single glyph from multiple images, those assets could be organized in the following structure inside the `data/` directory:
+
+```
+com.sometool.glyphImages/
+  A/
+    image1.psd
+    image2.psd
+    image3.psd
+  B/
+    image1.psd
+    image2.psd
+```
+
+<Info>
+The data directory is only available in UFO 3 and later. Do not write a `data` directory into a UFO with a `formatVersion` of `2` in `metainfo.plist`.
+</Info>
+
+## Storage Keys
+
+Data collisions between different tools are prevented by using a **reverse domain name storage key system**. The developer of a data structure stores their data under their own domain name, appended with a relevant descriptive name. For example:
+
+- `com.somefoundry.productionTool`
+- `com.sometool.glyphImages`
+- `org.robofab.legacyData`
+
+The documentation for a storage key's data structure may be published publicly so that other tools can interoperate with it, or it may remain strictly for private use. Either way, as long as all tools follow the reverse domain convention, key collisions are avoided.
+
+<Tip>
+If you intend your custom data to be reused by other tools, consider publishing the key name and its expected data structure so the broader community can benefit.
+</Tip>
+
+## Object Identifiers
+
+In some cases, a tool may need to refer to specific objects within the UFO — for example, particular guidelines, contours, or anchors. UFO 3 introduced **object identifiers** precisely for this purpose. Identifiers are short unique strings assigned to individual objects and can be used as keys when storing related metadata.
+
+For example, a tool that shows font guidelines only under certain conditions might define "smart guides" like this:
+
+- Smart Guide
+  - guide identifier: `7pdbofkUhz`
+    - unicode category: `Lu`
+- Smart Guide
+  - guide identifier: `z1bkCMlhNb`
+  - glyph name pattern: `*.sc*`
+  - contour count: `> 0`
+
+This data could be stored in `lib.plist` using the guide identifiers as dictionary keys:
+
+```xml
+<key>com.sometool.smartGuides</key>
+<dict>
+  <key>7pdbofkUhz</key>
+  <dict>
+    <key>unicodeCategory</key>
+    <string>Lu</string>
+  </dict>
+  <key>z1bkCMlhNb</key>
+  <dict>
+    <key>contourCount</key>
+    <array>
+      <string>&gt;</string>
+      <integer>0</integer>
+    </array>
+    <key>glyphNamePattern</key>
+    <string>*.sc*</string>
+  </dict>
+</dict>
+```
+
+<Note>
+Object identifiers are defined per object type in the UFO 3 specification. Refer to the relevant section of the specification (e.g. guidelines in `fontinfo.plist`, contours in GLIF) for the exact attribute names and uniqueness requirements.
+</Note>

@@ -1,0 +1,203 @@
+---
+title: "UFO Version History: From UFO 1 to UFO 4"
+sidebarTitle: "Versions"
+description: "Compare all four UFO versions — published in 2004, 2009, 2012, and in development — and explore the directory structures and features each introduced."
+---
+
+The UFO specification has been published in four versions spanning two decades. Each version is a deliberate, backwards-compatible evolution of its predecessor: new files and capabilities are added, but no existing structures are removed without a clear migration path. Understanding what each version introduced helps you choose the right target for your tooling and understand why UFO files look the way they do.
+
+## Version Overview
+
+| Version | Published | Key Addition |
+|---------|-----------|--------------|
+| UFO 1 | 2004 | Core structure: font info, groups, kerning, glyphs |
+| UFO 2 | March 2009 | Redesigned `fontinfo.plist`; added `features.fea` |
+| UFO 3 | March 2012 | Glyph layers, images, data directory, `.ufoz` ZIP format |
+| UFO 4 | In development | Extension of UFO 3; proposals tracked on GitHub |
+
+<Info>
+The `metainfo.plist` file present in every UFO records the `formatVersion` integer so authoring tools can detect which version of the spec a given UFO targets without reading any other file.
+</Info>
+
+## Version Details
+
+<Tabs>
+  <Tab title="UFO 1 (2004)">
+    UFO 1 was published in 2004 and established the foundational directory structure that all later versions build upon. A UFO 1 package is a single directory with the `.ufo` extension containing a small set of well-defined files.
+
+    **Directory Structure**
+
+    ```
+    MyFont.ufo/
+    ├── metainfo.plist
+    ├── fontinfo.plist
+    ├── groups.plist
+    ├── kerning.plist
+    ├── lib.plist
+    └── glyphs/
+        ├── contents.plist
+        └── *.glif
+    ```
+
+    **File Descriptions**
+
+    | File | Purpose |
+    |------|---------|
+    | `metainfo.plist` | Format version, creator, and other metadata. |
+    | `fontinfo.plist` | Font-level data such as family name, units per em, and PostScript values. |
+    | `groups.plist` | Named glyph group definitions. |
+    | `kerning.plist` | Kern pair values keyed by group or glyph name. |
+    | `lib.plist` | Arbitrary custom data for use by authoring tools. |
+    | `glyphs/contents.plist` | Mapping of glyph names to `.glif` file names. |
+    | `glyphs/*.glif` | Individual glyph definitions (outlines, advance widths, Unicode values). |
+
+    **Key Characteristics**
+
+    - All data files are XML property lists (`.plist`) except glyph definitions which use the GLIF format.
+    - The `glyphs/` directory contains exactly one layer — the primary outlines.
+    - There is no support for OpenType feature code or embedded images.
+  </Tab>
+
+  <Tab title="UFO 2 (2009)">
+    UFO 2 was published in March 2009. It is structurally very similar to UFO 1 but introduced a redesigned `fontinfo.plist` and added explicit support for OpenType feature code.
+
+    **Directory Structure**
+
+    ```
+    MyFont.ufo/
+    ├── metainfo.plist
+    ├── fontinfo.plist
+    ├── groups.plist
+    ├── kerning.plist
+    ├── features.fea
+    ├── lib.plist
+    └── glyphs/
+        ├── contents.plist
+        └── *.glif
+    ```
+
+    **File Descriptions**
+
+    | File | Purpose |
+    |------|---------|
+    | `metainfo.plist` | Format version, creator, and other metadata. |
+    | `fontinfo.plist` | Redesigned font info data — cleaner, clearer, and more organized than UFO 1. |
+    | `groups.plist` | Glyph group definitions. |
+    | `kerning.plist` | Kerning data. |
+    | `features.fea` | OpenType feature definitions in Adobe feature file syntax. |
+    | `lib.plist` | Arbitrary custom data. |
+    | `glyphs/contents.plist` | File name to glyph name mapping. |
+    | `glyphs/*.glif` | A glyph definition. |
+
+    **Changes from UFO 1**
+
+    <Steps>
+      <Step title="fontinfo.plist Redesign">
+        The `fontinfo.plist` structure was redesigned to make things cleaner, clearer, and more organized. Keys were renamed and reorganized to align more closely with OpenType and PostScript conventions.
+      </Step>
+      <Step title="features.fea Added">
+        The `features.fea` file was added. It holds OpenType feature definitions using the standard Adobe OpenType feature file syntax. In UFO 2 this file *should* be plain text; UFO 3 strengthened this to *must* be plain text.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="UFO 3 (2012)">
+    UFO 3 was published in March 2012 and is the most widely supported version today. It introduced glyph layers, embedded images, an arbitrary data directory, a ZIP storage option, and many `fontinfo.plist` additions.
+
+    **Directory Structure**
+
+    ```
+    MyFont.ufo/
+    ├── metainfo.plist
+    ├── fontinfo.plist
+    ├── groups.plist
+    ├── kerning.plist
+    ├── features.fea
+    ├── lib.plist
+    ├── layercontents.plist
+    ├── glyphs/
+    │   ├── contents.plist
+    │   ├── layerinfo.plist
+    │   └── *.glif
+    ├── images/
+    │   └── *.png
+    └── data/
+    ```
+
+    **File and Directory Descriptions**
+
+    | Path | Purpose |
+    |------|---------|
+    | `metainfo.plist` | Format version (`3`), creator, and other metadata. |
+    | `fontinfo.plist` | Extended font info including WOFF metadata, name table entries, guidelines, and gasp table data. |
+    | `groups.plist` | Glyph group definitions with formalized kerning group behavior and standardized naming. |
+    | `kerning.plist` | Kerning data with extensive information about pair types and writing direction. |
+    | `features.fea` | OpenType feature definitions (must be plain text in UFO 3). |
+    | `lib.plist` | Arbitrary custom data with standardized key naming and a standard glyph order location. |
+    | `layercontents.plist` | Maps each `glyphs*` directory name to its layer name. |
+    | `glyphs*/contents.plist` | File name to glyph name mapping within a layer. |
+    | `glyphs*/layerinfo.plist` | Per-layer metadata (new in UFO 3). |
+    | `glyphs*/*.glif` | GLIF format version 2 with support for images, guidelines, anchors, and identifiers. |
+    | `images/` | PNG images referenced by glyphs. |
+    | `data/` | Arbitrary custom data too large or complex for `lib.plist`. |
+
+    **Key Changes from UFO 2**
+
+    <Steps>
+      <Step title="Glyph Layers">
+        UFO 3 supports multiple glyph layers stored as separate `glyphs*/` directories. Layers can represent foreground/background drawing environments, multi-layer color fonts, or revision history. The required primary layer must be stored in the `glyphs/` directory.
+      </Step>
+      <Step title="layercontents.plist">
+        The new `layercontents.plist` file maps each glyph directory name to a human-readable layer name, enabling tools to enumerate layers without guessing directory conventions.
+      </Step>
+      <Step title="images/ Directory">
+        A top-level `images/` directory was added to hold PNG images that can be referenced from within GLIF files, useful for tracing templates.
+      </Step>
+      <Step title="data/ Directory">
+        The `data/` directory provides a home for arbitrary structured data that cannot fit in `lib.plist`, such as large binary assets or deeply nested custom structures.
+      </Step>
+      <Step title="UFO ZIP (.ufoz) Format">
+        A single-file ZIP storage format was added alongside the traditional directory package. UFO ZIP files use the `.ufoz` extension, must not be encrypted, and must contain all UFO contents within a single root directory inside the archive.
+      </Step>
+      <Step title="GLIF Version 2">
+        The GLIF format was bumped to version 2, adding `identifier` attributes on contours, components, and points, plus new `<image>`, `<guideline>`, and `<anchor>` elements.
+      </Step>
+    </Steps>
+
+    **Storage Formats**
+
+    | Extension | Name | Description |
+    |-----------|------|-------------|
+    | `.ufo` | UFO Package | Standard multi-file directory on the file system. |
+    | `.ufoz` | UFO ZIP | ZIP archive; ZIP64 allowed; UTF-8 file names; may be compressed; must not be encrypted. |
+  </Tab>
+
+  <Tab title="UFO 4 (In Development)">
+    UFO 4 is an extension of UFO 3 that is currently under active development. No formal publication date has been set. All design work is conducted openly in the GitHub issue tracker.
+
+    <Warning>
+      UFO 4 is not yet a finalized specification. Its structure and feature set may change as proposals are reviewed, approved, or rejected. Do not rely on UFO 4 details for production tooling until the specification is published.
+    </Warning>
+
+    **Development Process**
+
+    Proposals for UFO 4 go through a structured lifecycle in the GitHub issue tracker:
+
+    | Stage | Label | Description |
+    |-------|-------|-------------|
+    | Proposed | `proposal` | An idea submitted for community discussion. |
+    | Under Consideration | `considering` | The proposal is being actively discussed. |
+    | Approved | `approved` | The proposal has been accepted for inclusion. |
+    | Rejected | `rejected` | The proposal was declined after review. |
+
+    **How to Follow Development**
+
+    - Browse open proposals: [GitHub Issues — ufo4 label](https://github.com/unified-font-object/ufo-spec/issues?q=is%3Aopen+label%3Aufo4)
+    - Subscribe to updates: [UFO Specification Google Group](https://groups.google.com/g/ufo-spec)
+    - Contribute a proposal: [Contributing Guidelines](https://github.com/unified-font-object/ufo-spec/blob/master/CONTRIBUTING.md)
+
+    <Tip>
+      If you have a feature you would like to see in UFO 4, open an issue on GitHub. The specification maintainers welcome contributions from the broader type design and font engineering community.
+    </Tip>
+  </Tab>
+</Tabs>

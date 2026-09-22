@@ -1,0 +1,314 @@
+---
+title: "kerning.plist: Horizontal Kerning Pairs and Group Kerning"
+sidebarTitle: "kerning.plist"
+description: "Reference for kerning.plist, covering glyph and group kerning pairs, three-level exception handling, the lookup algorithm, and UFO 1/2 conversion."
+---
+
+The `kerning.plist` file stores horizontal kerning pairs for a UFO font. It is an XML Property List and is **optional**; if absent, the font contains no horizontal kerning data. Kerning pairs reference individual glyphs or kerning groups (defined in `groups.plist`), allowing large amounts of kerning information to be expressed with relatively few pair definitions.
+
+## File Format
+
+The property list data consists of a **nested dictionary**. The top-level dictionary uses *first member names* as keys; each value is a sub-dictionary whose keys are *second member names* and whose values are kerning amounts (integer or float).
+
+Pair members are either glyph names or group names. Group names used as the first member must begin with `public.kern1.`; those used as the second member must begin with `public.kern2.`. Glyphs and groups referenced in pairs are not required to be present in the font, and groups may be empty — it is the responsibility of the authoring tool to handle these cases when compiling.
+
+<Info>
+  Kerning pairs not defined in `kerning.plist` implicitly have a value of zero (no kerning). Pairs with a zero value should not be stored unless they are required as explicit exceptions.
+</Info>
+
+---
+
+## Writing Direction
+
+Kerning data is **writing-direction neutral**. The first key in the top-level dictionary always represents the *leading* glyph in the text stream:
+
+- **Left-to-right text:** the left-most glyph is the top-level key.
+- **Right-to-left text:** the right-most glyph is the top-level key.
+
+For example, in the pair *LG* written left-to-right, `L` is the top-level key and `G` is the sub-dictionary key.
+
+---
+
+## Kerning Pair Types
+
+When a group is used as a kerning pair member, all glyphs in that group inherit the same kerning value (unless overridden by an exception). For example, given the group:
+
+| Name           | Members  |
+|----------------|----------|
+| public.kern1.O | O, D, Q  |
+
+And the pair:
+
+| Side 1         | Side 2 | Value |
+|----------------|--------|-------|
+| public.kern1.O | A      | -50   |
+
+The implied glyph-level pairs are:
+
+| Side 1 | Side 2 | Value |
+|--------|--------|-------|
+| O      | A      | -50   |
+| D      | A      | -50   |
+| Q      | A      | -50   |
+
+The UFO specification supports three pair types:
+
+<CardGroup cols={3}>
+  <Card title="Group + Group" icon="layer-group">
+    Both sides are group names. Example: `public.kern1.O` + `public.kern2.E`
+  </Card>
+  <Card title="Glyph + Group / Group + Glyph" icon="object-ungroup">
+    One side is a glyph name, the other is a group. Example: `A` + `public.kern2.E`
+  </Card>
+  <Card title="Glyph + Glyph" icon="font">
+    Both sides are individual glyph names. Example: `A` + `X`
+  </Card>
+</CardGroup>
+
+---
+
+## Exceptions
+
+Kerning pairs are organized into **three levels of specificity**. Higher-level (more specific) pairs override lower-level ones:
+
+| Level | Type |
+|-------|------|
+| Level 1 | Group + Group |
+| Level 2 | Glyph + Group, or Group + Glyph |
+| Level 3 | Glyph + Glyph |
+
+### Exception Example
+
+Given these two groups:
+
+| Name           | Members |
+|----------------|---------|
+| public.kern1.O | O, D, Q |
+| public.kern2.E | E, F    |
+
+With the following pairs defined:
+
+| Side 1         | Side 2         | Value | Level |
+|----------------|----------------|-------|-------|
+| public.kern1.O | public.kern2.E | -100  | 1     |
+| public.kern1.O | F              | -200  | 2     |
+| D              | F              | -300  | 3     |
+
+The resolved glyph-level values are:
+
+| Side 1 | Side 2 | Value | Reason |
+|--------|--------|-------|--------|
+| O      | E      | -100  | Level 1 group pair |
+| O      | F      | -200  | Level 2 exception overrides Level 1 |
+| D      | E      | -100  | Level 1 group pair |
+| D      | F      | -300  | Level 3 exception overrides Levels 1 and 2 |
+| Q      | E      | -100  | Level 1 group pair |
+| Q      | F      | -200  | Level 2 exception applies |
+
+### Exception Conflict Resolution
+
+Conflicts arise when both a `glyph + group` pair and a `group + glyph` pair could apply to the same resolved combination. For example, with `public.kern1.O + F = -200` and `Q + public.kern2.E = -250`, both Level 2 pairs can produce a value for `Q + F`:
+
+| Side 1 | Side 2 | Value |
+|--------|--------|-------|
+| Q      | F      | **-200 or -250?** |
+
+<Warning>
+  When a `glyph + group` pair and a `group + glyph` pair conflict, **glyph + group pairs take priority over group + glyph pairs**. In the example above, `Q + F` resolves to **-250** (from `Q + public.kern2.E`).
+</Warning>
+
+---
+
+## Kerning Value Lookup Algorithm
+
+To find the kerning value for a specific glyph + glyph combination, apply the following steps in order. The first match wins:
+
+<Steps>
+  <Step title="Check glyph + glyph">
+    If the pair *first glyph + second glyph* is directly in the kerning data, use that value.
+  </Step>
+  <Step title="Check glyph + second group">
+    If the second glyph belongs to a `public.kern2.*` group, check whether *first glyph + second group* is in the kerning data.
+  </Step>
+  <Step title="Check first group + glyph">
+    If the first glyph belongs to a `public.kern1.*` group, check whether *first group + second glyph* is in the kerning data.
+  </Step>
+  <Step title="Check first group + second group">
+    If both glyphs belong to kerning groups, check whether *first group + second group* is in the kerning data.
+  </Step>
+  <Step title="Return zero">
+    If none of the above pairs are found, the kerning value is zero.
+  </Step>
+</Steps>
+
+### Sample Implementation
+
+```python
+def lookupKerningValue(pair, kerning, groups, fallback=0):
+    """
+    Note: This expects kerning to be a flat dictionary
+    of kerning pairs, not the nested structure used
+    in kerning.plist.
+
+    >>> groups = {
+    ...     "public.kern1.O" : ["O", "D", "Q"],
+    ...     "public.kern2.E" : ["E", "F"]
+    ... }
+    >>> kerning = {
+    ...     ("public.kern1.O", "public.kern2.E") : -100,
+    ...     ("public.kern1.O", "F") : -200,
+    ...     ("D", "F") : -300
+    ... }
+    >>> lookupKerningValue(("D", "F"), kerning, groups)
+    -300
+    >>> lookupKerningValue(("O", "F"), kerning, groups)
+    -200
+    >>> lookupKerningValue(("O", "E"), kerning, groups)
+    -100
+    >>> lookupKerningValue(("O", "O"), kerning, groups)
+    0
+    """
+    if pair in kerning:
+        return kerning[pair]
+    first, second = pair
+    firstGroup = secondGroup = None
+    if first.startswith("public.kern1."):
+        firstGroup = first
+        first = None
+    else:
+        for group, groupMembers in groups.items():
+            if group.startswith("public.kern1."):
+                if first in groupMembers:
+                    firstGroup = group
+                    break
+    if second.startswith("public.kern2."):
+        secondGroup = second
+        second = None
+    else:
+        for group, groupMembers in groups.items():
+            if group.startswith("public.kern2."):
+                if second in groupMembers:
+                    secondGroup = group
+                    break
+    pairs = [
+        (first, second),
+        (first, secondGroup),
+        (firstGroup, second),
+        (firstGroup, secondGroup)
+    ]
+    for pair in pairs:
+        if pair in kerning:
+            return kerning[pair]
+    return fallback
+```
+
+---
+
+## Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>public.kern1.BGroup</key>
+  <dict>
+    <key>public.kern2.CGroup</key>
+    <integer>7</integer>
+    <key>public.kern2.DGroup</key>
+    <integer>8</integer>
+    <key>A</key>
+    <integer>5</integer>
+    <key>B</key>
+    <integer>6</integer>
+  </dict>
+  <key>public.kern1.CGroup</key>
+  <dict>
+    <key>public.kern2.CGroup</key>
+    <integer>11</integer>
+    <key>public.kern2.DGroup</key>
+    <integer>12</integer>
+    <key>A</key>
+    <integer>9</integer>
+    <key>B</key>
+    <integer>10</integer>
+  </dict>
+  <key>A</key>
+  <dict>
+    <key>public.kern2.CGroup</key>
+    <integer>3</integer>
+    <key>public.kern2.DGroup</key>
+    <integer>4</integer>
+    <key>A</key>
+    <integer>1</integer>
+    <key>B</key>
+    <integer>2</integer>
+  </dict>
+</dict>
+</plist>
+```
+
+---
+
+## Converting UFO 1 and UFO 2 Kerning to UFO 3
+
+In UFO 1 and UFO 2, a kerning pair member that shared a name with a group was implicitly treated as that group. UFO 3 requires explicit `public.kern1.` and `public.kern2.` prefixes on all kerning group names. The following algorithm describes how to upgrade older kerning data.
+
+<Steps>
+  <Step title="Collect first-side groups">
+    Make a list of all groups referenced on the first side of kerning pairs.
+  </Step>
+  <Step title="Rename first-side groups">
+    For each group, if its name does not already begin with `public.kern1.`, prepend `public.kern1.` to form a new name. If that new name already exists, append an incrementing number until the name is unique. Store the group contents under the new name in `groups.plist` and update `kerning.plist`.
+  </Step>
+  <Step title="Collect second-side groups">
+    Make a list of all groups referenced on the second side of kerning pairs.
+  </Step>
+  <Step title="Rename second-side groups">
+    For each group, if its name does not already begin with `public.kern2.`, prepend `public.kern2.` to form a new name (with uniqueness handling as above). Store the group contents under the new name and update all second-side references in `kerning.plist`.
+  </Step>
+</Steps>
+
+### Sample Conversion Implementation
+
+```python
+def convertUFO1OrUFO2KerningToUFO3Kerning(kerning, groups, glyphSet=()):
+    firstReferencedGroups = set()
+    secondReferencedGroups = set()
+    for first, seconds in kerning.items():
+        if first in groups and first not in glyphSet:
+            if not first.startswith("public.kern1."):
+                firstReferencedGroups.add(first)
+        for second in seconds.keys():
+            if second in groups and second not in glyphSet:
+                if not second.startswith("public.kern2."):
+                    secondReferencedGroups.add(second)
+    firstRenamedGroups = {}
+    for first in firstReferencedGroups:
+        existingGroupNames = list(groups.keys()) + list(firstRenamedGroups.keys())
+        newName = makeUniqueGroupName("public.kern1." + first, existingGroupNames)
+        firstRenamedGroups[first] = newName
+    secondRenamedGroups = {}
+    for second in secondReferencedGroups:
+        existingGroupNames = list(groups.keys()) + list(secondRenamedGroups.keys())
+        newName = makeUniqueGroupName("public.kern2." + second, existingGroupNames)
+        secondRenamedGroups[second] = newName
+    newKerning = {}
+    for first, seconds in kerning.items():
+        first = firstRenamedGroups.get(first, first)
+        newSeconds = {}
+        for second, value in seconds.items():
+            second = secondRenamedGroups.get(second, second)
+            newSeconds[second] = value
+        newKerning[first] = newSeconds
+    for oldName, newName in list(firstRenamedGroups.items()) + list(secondRenamedGroups.items()):
+        groups[newName] = list(groups[oldName])
+    return newKerning, groups
+
+def makeUniqueGroupName(name, groupNames, counter=0):
+    newName = name if counter == 0 else "%s%d" % (name, counter)
+    if newName in groupNames:
+        return makeUniqueGroupName(name, groupNames, counter + 1)
+    return newName
+```

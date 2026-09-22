@@ -1,0 +1,190 @@
+---
+title: "Glyphs Directory: Contents and File Naming"
+sidebarTitle: "Glyphs Directory"
+description: "The glyphs directory holds GLIF files for a single font layer. A required contents.plist maps glyph names to filenames using a defined naming algorithm."
+---
+
+Each glyphs directory in a UFO package represents one layer of glyph data. The directory may hold zero or more GLIF files containing individual glyph outlines, metrics, and metadata. Every glyphs directory — regardless of whether it contains any GLIF files — must include a `contents.plist` file that maps glyph names to their corresponding filenames. An optional `layerinfo.plist` file may also be present to store layer-level metadata.
+
+## Directory Contents
+
+<CardGroup cols={2}>
+  <Card title="contents.plist" icon="file-lines">
+    **Required.** A dictionary mapping every glyph name in the layer to the GLIF filename that stores its data.
+  </Card>
+  <Card title="*.glif files" icon="pen-nib">
+    **Optional.** Zero or more Glyph Interchange Format files. Each file stores the outline, metrics, and other data for a single glyph.
+  </Card>
+  <Card title="layerinfo.plist" icon="circle-info">
+    **Optional.** Stores layer-level properties such as a display color and a custom lib dictionary.
+  </Card>
+</CardGroup>
+
+## contents.plist
+
+`contents.plist` is a required XML property list whose top-level object is a dictionary. Each **key** is a glyph name and each **value** is the corresponding GLIF filename.
+
+<Note>
+  `contents.plist` must be present even when the glyphs directory contains no GLIF files.
+</Note>
+
+### Glyph Name Rules
+
+<ParamField body="glyphName" type="string" required>
+  Glyph names may contain any character except control characters (U+0000–U+001F, U+007F, and U+0080–U+009F). They must be at least one character long with no maximum length. Glyph names must be unique within the layer.
+</ParamField>
+
+### Filename Rules
+
+<ParamField body="fileName" type="string" required>
+  GLIF filenames must end with `.glif`. The stem before the extension must be unique within the layer. Filenames must be plain names — not absolute or relative paths — and must include the `.glif` extension. Glyph names are case-sensitive but many file systems are not, so the file naming algorithm described below must be used to produce safe filenames.
+</ParamField>
+
+Authoring tools should preserve existing GLIF filenames when writing into an existing UFO. Before any write operation, read the existing `contents.plist` to obtain the current name-to-filename mapping so that only new glyphs require new filenames to be generated.
+
+### Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>A</key>
+  <string>A_.glif</string>
+  <key>B</key>
+  <string>B_.glif</string>
+</dict>
+</plist>
+```
+
+## File Naming Algorithm
+
+Because glyph names are case-sensitive while many file systems are not, a deterministic algorithm is used to transform a glyph name into a safe filename. The algorithm produces unique, case-insensitive-safe filenames up to 255 characters long and avoids Windows reserved filenames.
+
+### Illegal Characters
+
+The following characters are replaced with underscores during the conversion:
+
+| Character | Code Point | Character | Code Point |
+|-----------|-----------|-----------|-----------|
+| `"` | U+0022 | `[` | U+005B |
+| `(` | U+0028 | `\` | U+005C |
+| `)` | U+0029 | `]` | U+005D |
+| `*` | U+002A | `\|` | U+007C |
+| `+` | U+002B | ASCII controls | U+0000–U+001F |
+| `/` | U+002F | Delete | U+007F |
+| `:` | U+003A | | |
+| `<` | U+003C | | |
+| `>` | U+003E | | |
+| `?` | U+003F | | |
+
+### Algorithm Steps
+
+<Steps>
+  <Step title="Replace illegal characters">
+    Replace any character from the illegal characters list with an underscore `_`.
+  </Step>
+  <Step title="Mark uppercase letters">
+    Insert an underscore immediately after every uppercase character.
+  </Step>
+  <Step title="Handle leading period">
+    If the name begins with a period and no prefix will be added, replace the leading period with an underscore.
+  </Step>
+  <Step title="Clip to maximum length">
+    Truncate the name from the end so it fits within 255 characters minus the length of any prefix and suffix.
+  </Step>
+  <Step title="Handle Windows reserved names">
+    Split the name on periods. For any part whose case-insensitive value matches a Windows reserved filename (CON, PRN, AUX, CLOCK$, NUL, COM1–COM9, LPT1–LPT9), insert an underscore at the start of that part.
+  </Step>
+  <Step title="Ensure uniqueness">
+    If the resulting name (case-insensitively) already exists in the layer, append a 15-digit zero-padded counter to a truncated version of the name and increment until a unique name is found. As a last resort, use a plain incrementing integer as the entire filename.
+  </Step>
+</Steps>
+
+### Conversion Examples
+
+| Glyph Name | File Name |
+|------------|-----------|
+| `a` | `a` |
+| `A` | `A_` |
+| `AE` | `A_E_` |
+| `Ae` | `A_e` |
+| `ae` | `ae` |
+| `aE` | `aE_` |
+| `a.alt` | `a.alt` |
+| `A.alt` | `A_.alt` |
+| `A.Alt` | `A_.A_lt` |
+| `T_H` | `T__H_` |
+| `f_f_i` | `f_f_i` |
+| `Aacute_V.swash` | `A_acute_V_.swash` |
+| `.notdef` | `_notdef` |
+| `con` | `_con` |
+| `CON` | `C_O_N_` |
+| `con.alt` | `_con.alt` |
+| `alt.con` | `alt._con` |
+
+<Tip>
+  The pattern is straightforward: every uppercase character gains a trailing underscore so that `A` becomes `A_` and `AE` becomes `A_E_`. This ensures case-insensitive file systems can still distinguish between `a.glif` (for lowercase `a`) and `A_.glif` (for uppercase `A`).
+</Tip>
+
+### Reference Implementation
+
+```python
+illegalCharacters = "\" * + / : < > ? [ \\ ] | \0".split(" ")
+illegalCharacters += [chr(i) for i in range(1, 32)]
+illegalCharacters += [chr(0x7F)]
+reservedFileNames = "CON PRN AUX CLOCK$ NUL A:-Z: COM1".lower().split(" ")
+reservedFileNames += "LPT1 LPT2 LPT3 COM2 COM3 COM4".lower().split(" ")
+maxFileNameLength = 255
+
+def userNameToFileName(userName, existing=[], prefix="", suffix=""):
+    """
+    existing should be a case-insensitive list
+    of all existing file names.
+
+    >>> userNameToFileName(u"a")
+    u'a'
+    >>> userNameToFileName(u"A")
+    u'A_'
+    >>> userNameToFileName(u"AE")
+    u'A_E_'
+    >>> userNameToFileName(u".notdef")
+    u'_notdef'
+    >>> userNameToFileName(u"con")
+    u'_con'
+    >>> userNameToFileName(u"CON")
+    u'C_O_N_'
+    """
+    assert isinstance(userName, unicode), \
+        "The value for userName must be a unicode string."
+    prefixLength = len(prefix)
+    suffixLength = len(suffix)
+    # replace an initial period with an _ if no prefix is to be added
+    if not prefix and userName[0] == ".":
+        userName = "_" + userName[1:]
+    # filter the user name
+    filteredUserName = []
+    for character in userName:
+        if character in illegalCharacters:
+            character = "_"
+        elif character != character.lower():
+            character += "_"
+        filteredUserName.append(character)
+    userName = "".join(filteredUserName)
+    # clip to 255
+    sliceLength = maxFileNameLength - prefixLength - suffixLength
+    userName = userName[:sliceLength]
+    # test for illegal file names
+    parts = []
+    for part in userName.split("."):
+        if part.lower() in reservedFileNames:
+            part = "_" + part
+        parts.append(part)
+    userName = ".".join(parts)
+    # test for clash
+    fullName = prefix + userName + suffix
+    if fullName.lower() in existing:
+        fullName = handleClash1(userName, existing, prefix, suffix)
+    return fullName
+```

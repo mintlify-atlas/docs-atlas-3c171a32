@@ -1,20 +1,80 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "Unified Font Object (UFO): Open Font Data Format"
+sidebarTitle: "Home"
+description: "UFO is a cross-platform, human-readable format for storing font data. Learn the specification for metainfo, fontinfo, glyphs, kerning, and more."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+The Unified Font Object (UFO) is an open, cross-platform format for storing font source data. Designed around plain-text files and a simple directory structure, UFO is readable by humans and tools alike — making it ideal for version control, collaboration, and long-term archival.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Understand the UFO design philosophy and what makes it cross-application and future-proof.
+  </Card>
+  <Card title="Version History" icon="timeline" href="/versions">
+    Compare UFO 1, 2, 3, and the in-development UFO 4 to choose the right version for your project.
+  </Card>
+  <Card title="UFO 3 Specification" icon="file-code" href="/ufo3/index">
+    Explore the complete UFO 3 format — directory structure, all plist files, GLIF, layers, and more.
+  </Card>
+  <Card title="Authoring Tool Guidelines" icon="wrench" href="/authoring-tool-guidelines">
+    Requirements and best practices for tools that read and write UFO files.
+  </Card>
+</CardGroup>
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+## The UFO Design Philosophy
+
+UFO is built on three core principles that have guided every version of the specification:
+
+- **Human readable and editable** — All data is stored as plain text (XML, property lists, OpenType feature code). Any file can be opened and edited with a text editor.
+- **Application independent** — The format is not tied to any single font editor or toolchain. Any tool that understands the spec can read and write UFO files.
+- **No unnecessary duplication** — Data is stored once and referenced where needed, keeping files clean and unambiguous.
+
+## Explore the Specification
+
+<CardGroup cols={3}>
+  <Card title="UFO 3" icon="layer-group" href="/ufo3/index">
+    The current specification. Adds glyph layers, images, data directory, and more.
+  </Card>
+  <Card title="UFO 2" icon="file" href="/ufo2/index">
+    Published in 2009. Introduced fontinfo redesign and OpenType features.
+  </Card>
+  <Card title="UFO 1" icon="clock-rotate-left" href="/ufo1/index">
+    The original 2004 format. A simple, foundational directory structure.
+  </Card>
+</CardGroup>
+
+## Quick Overview: UFO 3 Structure
+
+A UFO 3 package is a `.ufo` directory containing these files and directories:
+
+```
+MyFont.ufo/
+├── metainfo.plist        # Format version and creator tool
+├── fontinfo.plist        # Font names, metrics, OpenType table data
+├── groups.plist          # Glyph group definitions (including kerning groups)
+├── kerning.plist         # Horizontal kerning pairs
+├── features.fea          # OpenType feature definitions
+├── lib.plist             # Arbitrary custom data
+├── layercontents.plist   # Glyph layer directory mapping
+├── glyphs/               # Default glyph layer
+│   ├── contents.plist    # Glyph name → filename mapping
+│   ├── layerinfo.plist   # Layer metadata
+│   └── *.glif            # Individual glyph files (XML)
+├── images/               # PNG images referenced by glyphs
+└── data/                 # Arbitrary custom data (binary or structured)
+```
+
+<CardGroup cols={2}>
+  <Card title="Conventions" icon="circle-info" href="/conventions">
+    Data types, coordinate system, color definitions, and XML property list conventions.
+  </Card>
+  <Card title="Extensions" icon="puzzle-piece" href="/extensions">
+    How to safely store custom data in libs and the data directory without conflicts.
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/contributing">
+    How to propose changes to the specification and what the evaluation criteria are.
+  </Card>
+  <Card title="Contributors" icon="users" href="/contributors">
+    The people and organizations that have shaped the UFO specification.
+  </Card>
+</CardGroup>

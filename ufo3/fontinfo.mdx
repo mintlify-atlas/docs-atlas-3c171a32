@@ -1,0 +1,637 @@
+---
+title: "fontinfo.plist: Font Metadata and OpenType Table Data"
+sidebarTitle: "fontinfo.plist"
+description: "Reference for fontinfo.plist, which stores font names, dimensions, OpenType table fields, PostScript data, WOFF metadata, and global guidelines."
+---
+
+The `fontinfo.plist` file contains information about the font itself — including naming, dimensions, and table-specific data for OpenType, PostScript, and WOFF. This file is an XML Property List and is **optional**; not all keys are required for a valid UFO. Authoring tools should read and write only the keys they understand, and preserve unknown keys they encounter.
+
+<Note>
+  All fields in `fontinfo.plist` are optional. Omitting a key is valid; authoring tools should not require any particular field to be present.
+</Note>
+
+## Bit Numbers
+
+Throughout this specification, several fields reference **bit numbers** — lists of integers indicating which bits should be set in the corresponding binary font field. For example, given a fictional specification field `foo` with bits 0 (Left), 1 (Right), 2 (Up), and 3 (Down), storing "Left" and "Up" looks like this in `fontinfo.plist`:
+
+```xml
+<key>fictionalFontSpecFoo</key>
+<array>
+  <integer>0</integer>
+  <integer>2</integer>
+</array>
+```
+
+The integer values in the list correspond directly to the bit positions defined in the referenced specification for that field.
+
+---
+
+## Generic Identification Information
+
+These keys provide basic identity metadata about the font family and style.
+
+<ParamField path="familyName" type="string">
+  Family name. The specification is agnostic about how this value relates to `openTypeNamePreferredFamilyName`.
+</ParamField>
+
+<ParamField path="styleName" type="string">
+  Style name. The specification is agnostic about how this value relates to `openTypeNamePreferredSubfamilyName`.
+</ParamField>
+
+<ParamField path="styleMapFamilyName" type="string">
+  Family name used for bold, italic, and bold italic style mapping.
+</ParamField>
+
+<ParamField path="styleMapStyleName" type="string">
+  Style map style. Possible values are `regular`, `italic`, `bold`, and `bold italic`. These are case-sensitive.
+</ParamField>
+
+<ParamField path="versionMajor" type="integer">
+  Major version number of the font.
+</ParamField>
+
+<ParamField path="versionMinor" type="non-negative integer">
+  Minor version number of the font.
+</ParamField>
+
+<ParamField path="year" type="integer">
+  The year the font was created. **Deprecated as of UFO version 2.** Its presence should not be relied upon, but authoring tools should preserve it if encountered.
+</ParamField>
+
+---
+
+## Generic Legal Information
+
+<ParamField path="copyright" type="string">
+  Copyright statement. Corresponds to OpenType name table Name ID 0.
+</ParamField>
+
+<ParamField path="trademark" type="string">
+  Trademark statement. Corresponds to OpenType name table Name ID 7.
+</ParamField>
+
+---
+
+## Generic Dimension Information
+
+These keys describe the core vertical metrics of the font.
+
+<ParamField path="unitsPerEm" type="non-negative integer or float">
+  Units per em.
+</ParamField>
+
+<ParamField path="descender" type="integer or float">
+  Descender value. The specification is agnostic about its relationship to more specific vertical metric values.
+</ParamField>
+
+<ParamField path="xHeight" type="integer or float">
+  x-height value.
+</ParamField>
+
+<ParamField path="capHeight" type="integer or float">
+  Cap height value.
+</ParamField>
+
+<ParamField path="ascender" type="integer or float">
+  Ascender value. The specification is agnostic about its relationship to more specific vertical metric values.
+</ParamField>
+
+<ParamField path="italicAngle" type="integer or float">
+  Italic angle in counter-clockwise degrees from the vertical.
+</ParamField>
+
+---
+
+## Generic Miscellaneous Information
+
+<ParamField path="note" type="string">
+  An arbitrary note about the font.
+</ParamField>
+
+---
+
+## OpenType gasp Table Fields
+
+<ParamField path="openTypeGaspRangeRecords" type="list">
+  A list of gasp Range Records. These must be sorted in ascending order based on the `rangeMaxPPEM` value of each record.
+</ParamField>
+
+### gasp Range Record Format
+
+Each record in `openTypeGaspRangeRecords` is a dictionary with the following keys:
+
+<ParamField path="rangeMaxPPEM" type="non-negative integer">
+  The upper limit of the range, in PPEM. The final record should use `65535` (0xFFFF) as defined in the OpenType gasp specification. Corresponds to the `rangeMaxPPEM` field of the `GASPRANGE` record.
+</ParamField>
+
+<ParamField path="rangeGaspBehavior" type="list">
+  A list of bit numbers indicating the flags to be set. Corresponds to the `rangeGaspBehavior` field of the `GASPRANGE` record.
+
+  | Bit | Flag |
+  |-----|------|
+  | 0   | GASP_GRIDFIT (0x0001) |
+  | 1   | GASP_DOGRAY (0x0002) |
+  | 2   | GASP_SYMMETRIC_GRIDFIT (0x0004) |
+  | 3   | GASP_SYMMETRIC_SMOOTHING (0x0008) |
+</ParamField>
+
+---
+
+## OpenType head Table Fields
+
+<ParamField path="openTypeHeadCreated" type="string">
+  Creation date, expressed as `"YYYY/MM/DD HH:MM:SS"` in UTC. Month must be 1–12, day must be 1–end of month, hour 0–23, minute and second 0–59.
+</ParamField>
+
+<ParamField path="openTypeHeadLowestRecPPEM" type="non-negative integer">
+  Smallest readable size in pixels. Corresponds to the OpenType `head` table `lowestRecPPEM` field.
+</ParamField>
+
+<ParamField path="openTypeHeadFlags" type="list">
+  A list of bit numbers indicating the flags. The bit numbers are listed in the OpenType head specification. Corresponds to the `head` table `flags` field.
+</ParamField>
+
+<Info>
+  Several head table fields are derived or calculated by authoring tools: `fontRevision` comes from `versionMajor`/`versionMinor`; `checkSumAdjustment`, `magicNumber`, `modified`, `xMin/yMin/xMax/yMax`, `indexToLocFormat`, and `glyphDataFormat` are all set by the tool. `macStyle` is derived from `styleMapStyleName`.
+</Info>
+
+---
+
+## OpenType hhea Table Fields
+
+<ParamField path="openTypeHheaAscender" type="integer">
+  Ascender value. Corresponds to the `hhea` table `Ascender` field.
+</ParamField>
+
+<ParamField path="openTypeHheaDescender" type="integer">
+  Descender value. Corresponds to the `hhea` table `Descender` field.
+</ParamField>
+
+<ParamField path="openTypeHheaLineGap" type="integer">
+  Line gap value. Corresponds to the `hhea` table `LineGap` field.
+</ParamField>
+
+<ParamField path="openTypeHheaCaretSlopeRise" type="integer">
+  Caret slope rise value. Corresponds to the `hhea` table `caretSlopeRise` field.
+</ParamField>
+
+<ParamField path="openTypeHheaCaretSlopeRun" type="integer">
+  Caret slope run value. Corresponds to the `hhea` table `caretSlopeRun` field.
+</ParamField>
+
+<ParamField path="openTypeHheaCaretOffset" type="integer">
+  Caret offset value. Corresponds to the `hhea` table `caretOffset` field.
+</ParamField>
+
+<Info>
+  The following hhea fields should be calculated or set by the authoring tool: `advanceWidthMax`, `minLeftSideBearing`, `minRightSideBearing`, `xMaxExtent`, `metricDataFormat`, and `numberOfHMetrics`.
+</Info>
+
+---
+
+## OpenType Name Table Fields
+
+These keys map directly to named entries in the OpenType name table.
+
+<ParamField path="openTypeNameDesigner" type="string">
+  Designer name. Corresponds to name ID 9.
+</ParamField>
+
+<ParamField path="openTypeNameDesignerURL" type="string">
+  URL for the designer. Corresponds to name ID 12.
+</ParamField>
+
+<ParamField path="openTypeNameManufacturer" type="string">
+  Manufacturer name. Corresponds to name ID 8.
+</ParamField>
+
+<ParamField path="openTypeNameManufacturerURL" type="string">
+  Manufacturer URL. Corresponds to name ID 11.
+</ParamField>
+
+<ParamField path="openTypeNameLicense" type="string">
+  License text. Corresponds to name ID 13.
+</ParamField>
+
+<ParamField path="openTypeNameLicenseURL" type="string">
+  URL for the license. Corresponds to name ID 14.
+</ParamField>
+
+<ParamField path="openTypeNameVersion" type="string">
+  Version string. Corresponds to name ID 5.
+</ParamField>
+
+<ParamField path="openTypeNameUniqueID" type="string">
+  Unique ID string. Corresponds to name ID 3.
+</ParamField>
+
+<ParamField path="openTypeNameDescription" type="string">
+  Description of the font. Corresponds to name ID 10.
+</ParamField>
+
+<ParamField path="openTypeNamePreferredFamilyName" type="string">
+  Preferred family name. Corresponds to name ID 16.
+</ParamField>
+
+<ParamField path="openTypeNamePreferredSubfamilyName" type="string">
+  Preferred subfamily name. Corresponds to name ID 17.
+</ParamField>
+
+<ParamField path="openTypeNameCompatibleFullName" type="string">
+  Compatible full name. Corresponds to name ID 18.
+</ParamField>
+
+<ParamField path="openTypeNameSampleText" type="string">
+  Sample text. Corresponds to name ID 19.
+</ParamField>
+
+<ParamField path="openTypeNameWWSFamilyName" type="string">
+  WWS family name. Corresponds to name ID 21.
+</ParamField>
+
+<ParamField path="openTypeNameWWSSubfamilyName" type="string">
+  WWS subfamily name. Corresponds to name ID 22.
+</ParamField>
+
+<ParamField path="openTypeNameRecords" type="list">
+  A list of name records for platform, encoding, and language-localized name entries.
+</ParamField>
+
+### Name Record Format
+
+Each entry in `openTypeNameRecords` is a dictionary:
+
+<ParamField path="nameID" type="non-negative integer">
+  The name ID.
+</ParamField>
+
+<ParamField path="platformID" type="non-negative integer">
+  The platform ID.
+</ParamField>
+
+<ParamField path="encodingID" type="non-negative integer">
+  The encoding ID.
+</ParamField>
+
+<ParamField path="languageID" type="non-negative integer">
+  The language ID.
+</ParamField>
+
+<ParamField path="string" type="string">
+  The string value for the record.
+</ParamField>
+
+<Note>
+  Records should have a unique combination of `nameID`, `platformID`, `encodingID`, and `languageID`. If a duplicate combination is found, the **last** occurrence must be used as the value.
+</Note>
+
+---
+
+## OpenType OS/2 Table Fields
+
+<ParamField path="openTypeOS2WidthClass" type="non-negative integer">
+  Width class value. Must be in the range 1–9. Corresponds to `usWidthClass`.
+</ParamField>
+
+<ParamField path="openTypeOS2WeightClass" type="non-negative integer">
+  Weight class value. Corresponds to `usWeightClass`.
+</ParamField>
+
+<ParamField path="openTypeOS2Selection" type="list">
+  A list of bit numbers for `fsSelection`. **Note:** Bits 0 (italic), 5 (bold), and 6 (regular) must not be set here — they are derived from `styleMapStyleName`.
+</ParamField>
+
+<ParamField path="openTypeOS2VendorID" type="string">
+  Four-character identifier for the font creator. Corresponds to `achVendID`.
+</ParamField>
+
+<ParamField path="openTypeOS2Panose" type="list">
+  A list of exactly 10 non-negative integers representing the Panose classification. Corresponds to the OS/2 `Panose` field.
+</ParamField>
+
+<ParamField path="openTypeOS2FamilyClass" type="list">
+  Two integers representing the IBM font class ID (0–14) and subclass (0–15). Corresponds to `sFamilyClass`.
+</ParamField>
+
+<ParamField path="openTypeOS2UnicodeRanges" type="list">
+  Bit numbers for supported Unicode ranges. Corresponds to `ulUnicodeRange1`–`ulUnicodeRange4`.
+</ParamField>
+
+<ParamField path="openTypeOS2CodePageRanges" type="list">
+  Bit numbers for supported code page ranges. Corresponds to `ulCodePageRange1` and `ulCodePageRange2`.
+</ParamField>
+
+<ParamField path="openTypeOS2TypoAscender" type="integer">
+  Typographic ascender. Corresponds to `sTypoAscender`.
+</ParamField>
+
+<ParamField path="openTypeOS2TypoDescender" type="integer">
+  Typographic descender. Corresponds to `sTypoDescender`.
+</ParamField>
+
+<ParamField path="openTypeOS2TypoLineGap" type="integer">
+  Typographic line gap. Corresponds to `sTypoLineGap`.
+</ParamField>
+
+<ParamField path="openTypeOS2WinAscent" type="non-negative integer">
+  Windows ascender. Corresponds to `usWinAscent`.
+</ParamField>
+
+<ParamField path="openTypeOS2WinDescent" type="non-negative integer">
+  Windows descender. Corresponds to `usWinDescent`.
+</ParamField>
+
+<ParamField path="openTypeOS2Type" type="list">
+  Bit numbers indicating the embedding type. Corresponds to `fsType`.
+</ParamField>
+
+<ParamField path="openTypeOS2SubscriptXSize" type="integer">
+  Subscript horizontal font size. Corresponds to `ySubscriptXSize`.
+</ParamField>
+
+<ParamField path="openTypeOS2SubscriptYSize" type="integer">
+  Subscript vertical font size. Corresponds to `ySubscriptYSize`.
+</ParamField>
+
+<ParamField path="openTypeOS2SubscriptXOffset" type="integer">
+  Subscript x offset. Corresponds to `ySubscriptXOffset`.
+</ParamField>
+
+<ParamField path="openTypeOS2SubscriptYOffset" type="integer">
+  Subscript y offset. Corresponds to `ySubscriptYOffset`.
+</ParamField>
+
+<ParamField path="openTypeOS2SuperscriptXSize" type="integer">
+  Superscript horizontal font size. Corresponds to `ySuperscriptXSize`.
+</ParamField>
+
+<ParamField path="openTypeOS2SuperscriptYSize" type="integer">
+  Superscript vertical font size. Corresponds to `ySuperscriptYSize`.
+</ParamField>
+
+<ParamField path="openTypeOS2SuperscriptXOffset" type="integer">
+  Superscript x offset. Corresponds to `ySuperscriptXOffset`.
+</ParamField>
+
+<ParamField path="openTypeOS2SuperscriptYOffset" type="integer">
+  Superscript y offset. Corresponds to `ySuperscriptYOffset`.
+</ParamField>
+
+<ParamField path="openTypeOS2StrikeoutSize" type="integer">
+  Strikeout size. Corresponds to `yStrikeoutSize`.
+</ParamField>
+
+<ParamField path="openTypeOS2StrikeoutPosition" type="integer">
+  Strikeout position. Corresponds to `yStrikeoutPosition`.
+</ParamField>
+
+---
+
+## OpenType vhea Table Fields
+
+These fields support vertical layout metrics for CJK and other vertical text.
+
+<ParamField path="openTypeVheaVertTypoAscender" type="integer">
+  Vertical typographic ascender. Corresponds to `vertTypoAscender`.
+</ParamField>
+
+<ParamField path="openTypeVheaVertTypoDescender" type="integer">
+  Vertical typographic descender. Corresponds to `vertTypoDescender`.
+</ParamField>
+
+<ParamField path="openTypeVheaVertTypoLineGap" type="integer">
+  Vertical typographic line gap. Corresponds to `vertTypoLineGap`.
+</ParamField>
+
+<ParamField path="openTypeVheaCaretSlopeRise" type="integer">
+  Caret slope rise. Corresponds to `caretSlopeRise`.
+</ParamField>
+
+<ParamField path="openTypeVheaCaretSlopeRun" type="integer">
+  Caret slope run. Corresponds to `caretSlopeRun`.
+</ParamField>
+
+<ParamField path="openTypeVheaCaretOffset" type="integer">
+  Caret offset. Corresponds to `caretOffset`.
+</ParamField>
+
+---
+
+## PostScript Specific Data
+
+These keys apply to Type 1 and CFF (PostScript-based) font output.
+
+<ParamField path="postscriptFontName" type="string">
+  Name used for the `FontName` field in Type 1/CFF.
+</ParamField>
+
+<ParamField path="postscriptFullName" type="string">
+  Name used for the `FullName` field in Type 1/CFF.
+</ParamField>
+
+<ParamField path="postscriptSlantAngle" type="integer or float">
+  Artificial slant angle in counter-clockwise degrees from the vertical. This is **not** the same as `italicAngle`.
+</ParamField>
+
+<ParamField path="postscriptUniqueID" type="integer">
+  A unique ID number as defined in the Type 1/CFF specification.
+</ParamField>
+
+<ParamField path="postscriptUnderlineThickness" type="integer or float">
+  Underline thickness. Corresponds to `UnderlineThickness`.
+</ParamField>
+
+<ParamField path="postscriptUnderlinePosition" type="integer or float">
+  Underline position. Note: this value is ambiguous — post/CFF2 defines it from the top of the underline; Type 1/CFF defines it from the middle.
+</ParamField>
+
+<ParamField path="postscriptIsFixedPitch" type="boolean">
+  Indicates whether the font is monospaced. Corresponds to `isFixedPitched`.
+</ParamField>
+
+<ParamField path="postscriptBlueValues" type="list">
+  Up to 14 integers or floats for the Type 1/CFF `BlueValues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField path="postscriptOtherBlues" type="list">
+  Up to 10 integers or floats for the Type 1/CFF `OtherBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField path="postscriptFamilyBlues" type="list">
+  Up to 14 integers or floats for the Type 1/CFF `FamilyBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField path="postscriptFamilyOtherBlues" type="list">
+  Up to 10 integers or floats for the Type 1/CFF `FamilyOtherBlues` field. Must contain an even number of values.
+</ParamField>
+
+<ParamField path="postscriptStemSnapH" type="list">
+  Up to 12 horizontal stem values, sorted per the Type 1/CFF spec. Corresponds to `StemSnapH`.
+</ParamField>
+
+<ParamField path="postscriptStemSnapV" type="list">
+  Up to 12 vertical stem values, sorted per the Type 1/CFF spec. Corresponds to `StemSnapV`.
+</ParamField>
+
+<ParamField path="postscriptBlueFuzz" type="integer or float">
+  `BlueFuzz` value.
+</ParamField>
+
+<ParamField path="postscriptBlueShift" type="integer or float">
+  `BlueShift` value.
+</ParamField>
+
+<ParamField path="postscriptBlueScale" type="float">
+  `BlueScale` value.
+</ParamField>
+
+<ParamField path="postscriptForceBold" type="boolean">
+  Indicates how the `ForceBold` field should be set.
+</ParamField>
+
+<ParamField path="postscriptDefaultWidthX" type="integer or float">
+  Default width for glyphs.
+</ParamField>
+
+<ParamField path="postscriptNominalWidthX" type="integer or float">
+  Nominal width for glyphs.
+</ParamField>
+
+<ParamField path="postscriptWeightName" type="string">
+  Overall weight name string. Corresponds to the Type 1/CFF `Weight` field.
+</ParamField>
+
+<ParamField path="postscriptDefaultCharacter" type="string">
+  Name of the glyph to use as the default character in PFM files.
+</ParamField>
+
+<ParamField path="postscriptWindowsCharacterSet" type="integer">
+  Windows character set integer. Values: 1 = ANSI, 2 = Default, 3 = Symbol, 4 = Macintosh, 5 = Shift JIS, 6 = Hangul, 7 = Hangul (Johab), 8 = GB2312, 9 = Chinese BIG5, 10 = Greek, 11 = Turkish, 12 = Vietnamese, 13 = Hebrew, 14 = Arabic, 15 = Baltic, 16 = Bitstream, 17 = Cyrillic, 18 = Thai, 19 = Eastern European, 20 = OEM.
+</ParamField>
+
+---
+
+## WOFF Data
+
+Many WOFF fields can be populated from generic elements, but since WOFF is a wrapper format they may not always be duplicated. All WOFF fields are optional.
+
+<ParamField path="woffMajorVersion" type="non-negative integer">
+  Major version of the font for WOFF.
+</ParamField>
+
+<ParamField path="woffMinorVersion" type="non-negative integer">
+  Minor version of the font for WOFF.
+</ParamField>
+
+<ParamField path="woffMetadataUniqueID" type="dictionary">
+  Identification string. Must follow the WOFF Metadata Unique ID Record structure: `{ "id": string }`.
+</ParamField>
+
+<ParamField path="woffMetadataVendor" type="dictionary">
+  Font vendor metadata. Required key: `name` (string). Optional keys: `url`, `dir` (`ltr` or `rtl`), `class`.
+</ParamField>
+
+<ParamField path="woffMetadataCredits" type="dictionary">
+  Font credits. Contains a `credits` list; each credit has a required `name` and optional `url`, `role`, `dir`, `class`.
+</ParamField>
+
+<ParamField path="woffMetadataDescription" type="dictionary">
+  Font description. Optional `url` key plus a `text` list of WOFF Metadata Text Records.
+</ParamField>
+
+<ParamField path="woffMetadataLicense" type="dictionary">
+  Font license. Optional `url` and `id` keys plus a `text` list of WOFF Metadata Text Records (may be empty).
+</ParamField>
+
+<ParamField path="woffMetadataCopyright" type="dictionary">
+  Font copyright. Contains a `text` list with at least one WOFF Metadata Text Record.
+</ParamField>
+
+<ParamField path="woffMetadataTrademark" type="dictionary">
+  Font trademark. Contains a `text` list with at least one WOFF Metadata Text Record.
+</ParamField>
+
+<ParamField path="woffMetadataLicensee" type="dictionary">
+  Font licensee. Required key: `name`. Optional keys: `dir`, `class`.
+</ParamField>
+
+<ParamField path="woffMetadataExtensions" type="list">
+  A list of WOFF Metadata Extension Records. Must contain at least one record. Each record has optional `id`, a `names` list, and an `items` list (at least one item required).
+</ParamField>
+
+### WOFF Metadata Text Record
+
+Text records are used inside multiple WOFF metadata structures:
+
+<ParamField path="text" type="string">
+  The text content. Required.
+</ParamField>
+
+<ParamField path="language" type="string">
+  Language tag. Corresponds to the `xml:lang` attribute. Optional.
+</ParamField>
+
+<ParamField path="dir" type="string">
+  Writing direction: `ltr` or `rtl`. Optional.
+</ParamField>
+
+<ParamField path="class" type="string">
+  Class tokens. Optional.
+</ParamField>
+
+<Note>
+  WOFF metadata elements that allow `<div>` and `<span>` children must have those stored as raw escaped HTML text in the appropriate `text` field. For example:
+
+  ```xml
+  <key>woffMetadataDescription</key>
+  <dict>
+    <key>text</key>
+    <array>
+      <dict>
+        <key>language</key>
+        <string>en</string>
+        <key>text</key>
+        <string>&lt;div&gt;&lt;span dir=&quot;ltr&quot;&gt;description&lt;/span&gt;&lt;/div&gt;</string>
+      </dict>
+    </array>
+  </dict>
+  ```
+</Note>
+
+---
+
+## Guidelines
+
+<ParamField path="guidelines" type="list">
+  A list of guideline definitions that apply to all glyphs in all layers in the font. This attribute is optional.
+</ParamField>
+
+### Guideline Format
+
+Each guideline is a dictionary with the following keys:
+
+<ParamField path="x" type="integer or float">
+  The x coordinate. Optional if `y` is provided and `angle` is not provided. Omitting both `x` and `angle` creates a horizontal guideline.
+</ParamField>
+
+<ParamField path="y" type="integer or float">
+  The y coordinate. Optional if `x` is provided and `angle` is not provided. Omitting both `y` and `angle` creates a vertical guideline.
+</ParamField>
+
+<ParamField path="angle" type="integer or float">
+  Angle of the guideline, in counter-clockwise degrees from the horizontal, between 0 and 360. Must not be specified if neither `x` nor `y` is specified.
+</ParamField>
+
+<ParamField path="name" type="string">
+  An arbitrary name for the guideline. Optional.
+</ParamField>
+
+<ParamField path="color" type="string">
+  Color to apply to the guideline, following the UFO color definition format. Optional.
+</ParamField>
+
+<ParamField path="identifier" type="string">
+  Unique identifier for the guideline within `fontinfo.plist`. Optional, but once assigned must not be unnecessarily removed or changed. Must be unique within the `fontinfo.plist` guidelines list.
+</ParamField>
+
+The guideline extends along `angle` to infinity in both directions from the point defined by `x` and `y`.

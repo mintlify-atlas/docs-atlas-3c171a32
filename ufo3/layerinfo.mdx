@@ -1,0 +1,65 @@
+---
+title: "layerinfo.plist: Glyph Layer Metadata"
+sidebarTitle: "layerinfo.plist"
+description: "layerinfo.plist is an optional file inside a glyphs directory that stores a display color and a custom lib dictionary for the entire glyph layer."
+---
+
+Each glyphs directory in a UFO may contain an optional `layerinfo.plist` file that stores metadata about the layer as a whole. This file is not required, and no key within it is mandatory — only the values that are relevant to a given layer need to be present. When absent, the layer simply has no metadata of its own.
+
+<Info>
+  `layerinfo.plist` applies its settings to the entire layer. For example, a `color` defined here applies to all glyphs in the directory unless overridden at the individual glyph level.
+</Info>
+
+## File Format
+
+`layerinfo.plist` is an [XML Property List](http://www.apple.com/DTDs/PropertyList-1.0.dtd). The top-level object is a dictionary. All keys are optional.
+
+## Keys
+
+<ParamField body="color" type="string">
+  The display color for all glyphs in this layer. The value must follow the UFO color definition standard: a comma-separated string of four numbers between 0 and 1 representing the red, green, blue, and alpha components in the sRGB color space.
+
+  **Examples:** `"1,0,0,1"` (opaque red) · `"0,.5,0,.5"` (semi-transparent green)
+
+  When a glyph's `image` element also specifies a `color` attribute, the image-level color takes precedence over this layer-level color. If neither is defined, the image's original colors are used unless the authoring tool supplies its own default.
+</ParamField>
+
+<ParamField body="lib" type="dictionary">
+  A dictionary of arbitrary data specific to this layer. To prevent key conflicts between tools, all keys at the top level of this dictionary should follow the [Reverse Domain Naming Scheme](https://en.wikipedia.org/wiki/Reverse-DNS) — for example, `com.example.myTool.someKey`. The `public.*` key namespace is reserved for use by the UFO specification.
+</ParamField>
+
+## Color Definition Format
+
+Colors throughout UFO are defined as a comma-separated string with optional whitespace around the values:
+
+| String | Red | Green | Blue | Alpha |
+|--------|-----|-------|------|-------|
+| `1,0,0,1` | 1.0 | 0 | 0 | 1.0 |
+| `0,.5,0,.5` | 0 | 0.5 | 0 | 0.5 |
+
+All values must be integers or floats between 0 and 1 inclusive. Colors are always specified in the sRGB color space.
+
+## Example
+
+The following `layerinfo.plist` marks the layer with a semi-transparent red color and stores a custom tool key in the lib:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>color</key>
+  <string>1,0,0,0.5</string>
+  <key>lib</key>
+  <dict>
+    <key>com.example.myTool.layerType</key>
+    <string>sketches</string>
+  </dict>
+</dict>
+</plist>
+```
+
+<Tip>
+  Layer colors are a convenient way to visually distinguish between layers — for example, giving the default layer a neutral color, the background layer a blue tint, and a sketches layer a red tint. Authoring tools should expose this color in their layer management UI.
+</Tip>
