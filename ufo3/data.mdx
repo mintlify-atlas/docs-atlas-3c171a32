@@ -1,7 +1,7 @@
 ---
-title: "Data Directory: Arbitrary Custom Data Storage"
+title: "UFO Data Directory: Custom Application Data Storage"
 sidebarTitle: "Data"
-description: "The data directory stores binary or structured custom data that is too complex or too large for lib.plist, organized under reverse-domain-named top-level entries."
+description: "The data directory stores tool-specific data too complex for lib.plist, organized under reverse-domain-named top-level entries. Introduced in UFO 3."
 ---
 
 The `data` directory gives authoring tools a safe, well-defined location to store application-specific data that cannot fit into a property list. When the data a tool needs to persist is too large, too deeply nested, or simply not serializable as a plist value, the `data` directory is the right place for it. Both individual files and subdirectory trees are permitted here, giving tools complete freedom over how they organize their own private storage.

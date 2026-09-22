@@ -94,14 +94,14 @@ A glyph with the same name in more than one layer may have different Unicode val
 
 ## Changes from UFO 2
 
-The following summarises the major changes introduced in UFO 3. Sub-sections of the specification overrule this list where there are conflicts.
+This list is for reference only as it may leave some changes out. The sub-sections of the specification overrule this list.
 
 <CardGroup cols={2}>
   <Card title="Storage Format" icon="file-zipper">
     A single-file ZIP distribution format (UFO ZIP / `.ufoz`) was added.
   </Card>
   <Card title="metainfo.plist" icon="circle-info">
-    The `formatVersion` was bumped to 3. A new `formatVersionMinor` key was introduced.
+    The `formatVersion` was bumped to 3.
   </Card>
   <Card title="fontinfo.plist" icon="font">
     Added support for specific name table entries, WOFF metadata, font-level guidelines, and the gasp table. Value types for many keys were clarified.
@@ -123,6 +123,9 @@ The following summarises the major changes introduced in UFO 3. Sub-sections of 
   </Card>
   <Card title="glyphs/" icon="pen-nib">
     More than one `glyphs` directory is now allowed. Each directory represents one layer.
+  </Card>
+  <Card title="glyphs/contents.plist" icon="list">
+    The glyph name to file name algorithm was moved to the conventions page and expanded to be more robust. Information about allowed characters in glyph names was added.
   </Card>
   <Card title="glyphs/layerinfo.plist" icon="circle-info">
     This file is new in UFO 3. It stores per-layer metadata.

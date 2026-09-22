@@ -1,7 +1,7 @@
 ---
 title: "Extending UFO: Custom Data Storage and Object Identifiers"
 sidebarTitle: "Extensions"
-description: "How to safely store custom tool data in UFO files using libs, the data directory, reverse domain naming keys, and object identifiers without conflicting with other tools."
+description: "How to safely store custom tool data in UFO files using libs, the data directory, and reverse domain naming keys without conflicting with other tools."
 ---
 
 Very often, a user or developer needs to store data in a UFO that is not part of the official specification. Inserting this data into an arbitrary location will likely result in data loss and unexpected behaviour in UFO readers. The specification therefore designates specific areas where such data can be safely stored and retrieved without causing problems. The implementation details of these locations and techniques are officially defined in the UFO specification versions.
@@ -71,7 +71,6 @@ Data collisions between different tools are prevented by using a **reverse domai
 
 - `com.somefoundry.productionTool`
 - `com.sometool.glyphImages`
-- `org.robofab.legacyData`
 
 The documentation for a storage key's data structure may be published publicly so that other tools can interoperate with it, or it may remain strictly for private use. Either way, as long as all tools follow the reverse domain convention, key collisions are avoided.
 

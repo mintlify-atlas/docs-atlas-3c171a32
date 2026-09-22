@@ -1,7 +1,7 @@
 ---
 title: "UFO Conventions: Data Types, Coordinates, and Property Lists"
 sidebarTitle: "Conventions"
-description: "Shared conventions across all UFO versions: XML property lists, the coordinate system, all data types, color definitions, identifiers, and file naming rules."
+description: "Shared UFO conventions: XML property lists, coordinate system, data types, color definitions, identifiers, and the file naming algorithm for all versions."
 ---
 
 These conventions apply throughout the UFO specification, regardless of version. Understanding them is a prerequisite for correctly reading or writing any UFO file. They establish the rules for what content is allowed inside a UFO, how data is encoded, the meaning of the coordinate system, and how authoring tools should generate file names that are safe across all common operating systems.
@@ -85,45 +85,6 @@ In several places in the UFO, the [reverse domain naming system](http://en.wikip
 <Note>
 The prefix `public.*` (where `*` is an arbitrary string of one or more characters) is **reserved** for data structures that are part of the official UFO specification. Third-party tools must not use keys beginning with `public.`.
 </Note>
-
-## Identifiers
-
-Identifiers are optional string attributes attached to several objects in a UFO (contours, components, points, and others). When present, an identifier must be unique within the context defined for each object type by the specification.
-
-**Format rules:**
-
-- Between **1 and 100 characters** long.
-- All characters must be in the **printable ASCII range**: `0x20` to `0x7E` (space through tilde).
-
-There is no mandated identifier generation algorithm. Random strings, simple integers, UUIDs, timestamps, and any other scheme that produces compliant strings are all valid.
-
-### Example Identifier Algorithm
-
-The algorithm below generates a 10-character random string drawn from `0–9`, `A–Z`, and `a–z`, giving a space of 62¹⁰ possible values.
-
-```python
-import random
-
-characters = list("0123456789")
-characters += list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-characters += list("abcdefghijklmnopqrstuvwxyz")
-identifierLength = 10
-identifierRange = range(identifierLength)
-
-def makeRandomIdentifier(existing, recursionDepth=0):
-    if recursionDepth >= 50:
-        raise NotImplementedError, \
-            "Failed 50 times in a row to create a unique id. Sorry."
-    identifier = []
-    for i in identifierRange:
-        c = random.choice(characters)
-        identifier.append(c)
-    identifier = "".join(identifier)
-    if identifier in existing:
-        return makeRandomIdentifier(existing, recursionDepth+1)
-    else:
-        return identifier
-```
 
 ## Common User Name to File Name Algorithm
 
@@ -361,4 +322,43 @@ def handleClash2(existing=[], prefix="", suffix=""):
     if finalName is None:
         raise NameTranslationError("No unique name could be found.")
     return finalName
+```
+
+## Identifiers
+
+Identifiers are optional string attributes attached to several objects in a UFO (contours, components, points, and others). When present, an identifier must be unique within the context defined for each object type by the specification.
+
+**Format rules:**
+
+- Between **1 and 100 characters** long.
+- All characters must be in the **printable ASCII range**: `0x20` to `0x7E` (space through tilde).
+
+There is no mandated identifier generation algorithm. Random strings, simple integers, UUIDs, timestamps, and any other scheme that produces compliant strings are all valid.
+
+### Example Identifier Algorithm
+
+The algorithm below generates a 10-character random string drawn from `0–9`, `A–Z`, and `a–z`, giving a space of 62¹⁰ possible values.
+
+```python
+import random
+
+characters = list("0123456789")
+characters += list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+characters += list("abcdefghijklmnopqrstuvwxyz")
+identifierLength = 10
+identifierRange = range(identifierLength)
+
+def makeRandomIdentifier(existing, recursionDepth=0):
+    if recursionDepth >= 50:
+        raise NotImplementedError, \
+            "Failed 50 times in a row to create a unique id. Sorry."
+    identifier = []
+    for i in identifierRange:
+        c = random.choice(characters)
+        identifier.append(c)
+    identifier = "".join(identifier)
+    if identifier in existing:
+        return makeRandomIdentifier(existing, recursionDepth+1)
+    else:
+        return identifier
 ```

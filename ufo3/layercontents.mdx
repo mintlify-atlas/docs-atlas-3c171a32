@@ -26,7 +26,7 @@ The position of each inner array within the outer array determines the layer's o
 </ParamField>
 
 <ParamField body="directoryName" type="string" required>
-  The name of the directory inside the UFO package that holds this layer's glyph files. Must be a plain directory name — not an absolute or relative path — and must include the `glyphs.` prefix for all layers other than the required default layer. Each directory name must be unique within the font. Directory names are case-sensitive in the plist but many file systems are not, so care must be taken when choosing names.
+  The name of the directory inside the UFO package that holds this layer's glyph files. Must be a plain directory name — not an absolute or relative path — and must include the `glyphs.` prefix for all layers other than the required default layer. Each directory name must be unique within the font. Directory names are case-sensitive in the plist but many file systems are not, so care must be taken when choosing names. There is no one standard layer name to file name conversion, though a common implementation is defined in the conventions.
 </ParamField>
 
 ## Required Default Layer

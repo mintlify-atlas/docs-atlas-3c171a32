@@ -1,24 +1,22 @@
 ---
-title: "features.fea: OpenType Feature Definitions"
+title: "features.fea: OpenType Layout Features for UFO Fonts"
 sidebarTitle: "features.fea"
-description: "Reference for features.fea, the optional plain-text UTF-8 file storing OpenType feature code in Adobe AFDKO FEA syntax within a UFO package."
+description: "Reference for features.fea, the optional plain-text file storing OpenType feature code in Adobe AFDKO FEA syntax for a UFO font package."
 ---
 
 The `features.fea` file contains OpenType feature definitions for a UFO font. Unlike the other data files in a UFO package, this file is **plain text** — not an XML Property List. It is **optional**; if the file is not present in the UFO, the font contains no feature data.
 
 ## File Format
 
-The file must be a plain text file encoded as **UTF-8**. It stores feature code written in [AFDKO FEA syntax](https://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html) — the Adobe OpenType Feature File Specification used throughout the font industry for describing OpenType layout features, glyph substitutions, positioning rules, and more.
+The file must be a **plain text file** containing feature code in [AFDKO FEA syntax](https://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html). If a feature file is present, it must be self-contained — for example, any glyph or mark classes must be defined within the file. No assumption should be made about the validity of the syntax.
 
 <Note>
   Any `include()` statements in the feature file must use paths **relative to the UFO package root**, not relative to the `features.fea` file itself.
 </Note>
 
-## Self-Contained Requirement
-
-If a `features.fea` file is present, it must be **self-contained**. Any glyph classes, mark classes, or lookup definitions referenced within the file must be defined within the same file. No external references may be assumed to exist.
-
-Authoring tools should not assume that the feature file syntax is valid. The specification makes no requirement about the syntactic correctness of the content — tools must be tolerant of potentially invalid feature code.
+<Note>
+  In UFO 2, the file was only required to "should be" a plain text file. In UFO 3 this was strengthened: the file **must** be a plain text file.
+</Note>
 
 ## Relationship to Other UFO Files
 

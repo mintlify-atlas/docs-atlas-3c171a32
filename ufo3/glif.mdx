@@ -379,14 +379,65 @@ The `lib` element stores authoring-tool-specific, user-specific, or otherwise ar
 
 #### Standardized Lib Keys
 
+##### public.markColor
+
+A string following the color definition standard, representing the "mark" color displayed in font editors. This data is optional.
+
+##### public.truetype.instructions
+
+A dict defining a set of TrueType instructions assembly code for a glyph. This data is optional.
+
 | Key | Type | Description |
 |-----|------|-------------|
-| `public.markColor` | string | A color definition string representing the "mark" color shown in font editors. |
-| `public.truetype.instructions` | dict | TrueType hinting instructions assembly code for the glyph. |
-| `public.truetype.overlap` | boolean | When `true`, indicates glyph contours or components may overlap (sets OVERLAP_SIMPLE or OVERLAP_COMPOUND flags). |
-| `public.verticalOrigin` | integer or float | The vertical origin y coordinate used for vertical layout. |
-| `public.postscript.hints` | dict | PostScript hint data for the glyph. |
-| `public.objectLibs` | dict | Object-level lib data keyed by object identifiers for individual contours, points, components, anchors, or guidelines. |
+| `formatVersion` | string | Format version. Set to `"1"`. |
+| `id` | string | Hash of glyph outlines computed when the instructions dict is created or modified. Used to detect whether outlines have changed since the glyph was hinted; if they have, the instructions should not be used. |
+| `assembly` | string | TrueType instructions assembly as a string, using fontTools assembly format with optional line formatting between instructions. |
+
+##### public.truetype.overlap
+
+A boolean. When `true`, indicates the glyph contours or components may have overlap. Authoring tools may use this to set bit 6 (OVERLAP_SIMPLE) in TrueType Simple Glyph flags or bit 10 (OVERLAP_COMPOUND) in TrueType Composite Glyph flags. Authoring tools may ignore or override this data. This data is optional.
+
+##### public.verticalOrigin
+
+An integer or float representing the vertical origin `y` coordinate used for vertical layout. Authoring tools can use this together with the `advance` element's `height` attribute to create the VORG and vmtx tables. This data is optional.
+
+##### public.postscript.hints
+
+A dict defining PostScript hints for a glyph. Hints become invalid whenever the outline is edited to change point types or coordinates. The `id` hash allows authoring tools to detect whether the outline has changed since hinting and discard stale hints. This data is optional.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `formatVersion` | string | Format version. Currently `"1"`. |
+| `id` | string | Hash of glyph outlines computed when the glyph is hinted. If the current outline hash differs, the hints should be deleted. |
+| `hintSetList` | list | List of hint sets. Each hint set is a dict with a `pointTag` (unique point name matching a point's `name` attribute) and a `stems` list. Each stem string starts with `hstem` or `vstem` followed by coordinate pairs defining lower and upper stem edges. `hstem` strings must be sorted before `vstem` strings. |
+| `flexList` | string | List of unique point names, each identifying the start point of a flex hint. |
+
+##### public.objectLibs
+
+A dictionary of object-level lib data for individual contours, points, components, anchors, or guidelines within the glyph. Keys are object identifiers corresponding to objects in the glyph; values are dictionaries whose keys follow the reverse domain naming scheme. Keys that do not match any identifier in the glyph may be discarded.
+
+```xml
+<key>public.objectLibs</key>
+<dict>
+  <key>KN3WZjorob</key>
+  <dict>
+    <key>com.foundry.pointColor</key>
+    <string>0,1,0,0.5</string>
+  </dict>
+  <key>vMlVuTQd4d</key>
+  <dict>
+    <key>com.foundry.contourColor</key>
+    <string>1,0,0,0.5</string>
+  </dict>
+</dict>
+```
+
+Standardized object lib keys for components:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `public.truetype.roundOffsetToGrid` | boolean | Used in a component object-level dict. When `true`, sets bit 2 (ROUND_XY_TO_GRID) in TrueType Composite Glyph flags. |
+| `public.truetype.useMyMetrics` | boolean | Used in a component object-level dict. When `true`, sets bit 9 (USE_MY_METRICS) in TrueType Composite Glyph flags. |
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "lib.plist: Custom Data Storage with Reverse-Domain Keys"
 sidebarTitle: "lib.plist"
-description: "Reference for lib.plist, which stores arbitrary authoring-tool or user-specific font data using reverse-domain name keys, including the public.glyphOrder standard."
+description: "Reference for lib.plist, which stores arbitrary font data using reverse-domain name keys, covering public.glyphOrder and other standard public.* entries."
 ---
 
 The `lib.plist` file is a general-purpose data store for arbitrary, authoring-tool-specific, user-specific, or otherwise custom data associated with a UFO font. It is an XML Property List and is **optional**; if absent, the font contains no lib data. When font data is too complex or too large to store in the lib, it should instead be placed in the UFO's `data` directory.
@@ -50,6 +50,20 @@ The following `public.*` keys are registered by the UFO specification and map to
   Maps glyph names to their OpenType GDEF glyph class category. Both keys and values must be strings. Valid values are `unassigned`, `base`, `mark`, `ligature`, or `component`. Optional. The dictionary may be partial — glyphs not listed may be assigned to any class by the authoring tool.
 </ParamField>
 
+```xml
+<key>public.openTypeCategories</key>
+<dict>
+  <key>A</key>
+  <string>base</string>
+  <key>B</key>
+  <string>base</string>
+  <key>f_f</key>
+  <string>ligature</string>
+  <key>acutecomb</key>
+  <string>mark</string>
+</dict>
+```
+
 ### public.openTypeHeadModified
 
 <ParamField path="public.openTypeHeadModified" type="string">
@@ -59,7 +73,7 @@ The following `public.*` keys are registered by the UFO specification and map to
 ### public.openTypePostUnderlinePosition
 
 <ParamField path="public.openTypePostUnderlinePosition" type="integer">
-  Underline position defined as the top of the underline from the baseline, per the OpenType `post` table definition. When present, this value should be used for the `post` table `underlinePosition`. If `postscriptUnderlinePosition` is also present, the PostScript value takes precedence for Type 1 and CFF output.
+  Underline position defined as the top of the underline from the baseline, per the OpenType `post` table definition. When present, this value should be used for the `post` table `underlinePosition`. If `postscriptUnderlinePosition` is not defined, this value should also be used to calculate the Type 1 and CFF `underlinePosition`; if `postscriptUnderlinePosition` is also present, the PostScript value takes precedence for Type 1 and CFF output. To calculate the Type 1/CFF `UnderlinePosition`: `public.openTypePostUnderlinePosition` − `postscriptUnderlineThickness` / 2 (rounding 0.5 away from zero).
 </ParamField>
 
 ### public.postscriptNames
@@ -85,6 +99,22 @@ The following `public.*` keys are registered by the UFO specification and map to
 <ParamField path="public.unicodeVariationSequences" type="dictionary">
   Defines Unicode Variation Sequences. Keys are Variation Selector code points as hexadecimal strings; values are dictionaries mapping base character code points (hex strings) to glyph names. Used to generate the OpenType cmap subtable format 14. Optional.
 </ParamField>
+
+```xml
+<key>public.unicodeVariationSequences</key>
+<dict>
+  <key>FE0E</key>
+  <dict>
+    <key>1F170</key>
+    <string>Anegativesquared.text</string>
+  </dict>
+  <key>FE0F</key>
+  <dict>
+    <key>1F170</key>
+    <string>Anegativesquared</string>
+  </dict>
+</dict>
+```
 
 ### public.objectLibs
 

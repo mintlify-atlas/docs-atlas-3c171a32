@@ -256,7 +256,15 @@ A glyph may omit most elements. The advance and unicode are optional:
 
 ## contents.plist and File Naming
 
-GLIF file names are derived from glyph names using a deterministic algorithm designed to handle case-insensitive file systems. The most common implementation appends a trailing underscore (`_`) to any component of the glyph name that begins with a capital letter.
+GLIF file names are derived from glyph names using a deterministic algorithm designed to handle case-insensitive file systems. The algorithm has limited support for case-insensitive file systems: it assumes glyph names are not case-sensitive apart from the first character.
+
+The steps are:
+
+1. If the glyph name starts with a `.`, replace that `.` with `_` (some file systems treat names beginning with `.` as hidden).
+2. Break the glyph name into parts delimited by `.`.
+3. If the first part contains one or more underscores, it is a compound name: split it by `_`, append a trailing `_` to each member that starts with a capital letter, then rejoin with `_`.
+4. If the first part contains no underscore and starts with a capital letter, append a trailing `_`.
+5. Rejoin all parts with `.` and append `.glif`.
 
 | Glyph Name | File Name |
 |---|---|
@@ -265,13 +273,16 @@ GLIF file names are derived from glyph names using a deterministic algorithm des
 | `A.alt` | `A_.alt.glif` |
 | `T_H` | `T__H_.glif` |
 | `T_h` | `T__h.glif` |
+| `t_h` | `t_h.glif` |
 | `f_f_i` | `f_f_i.glif` |
 | `F_F_I` | `F__F__I_.glif` |
+| `Aacute_V.swash` | `Aacute__V_.swash.glif` |
 
 <Warning>
-  File system length limits can cause collisions, and the algorithm assumes
-  only the first character of a glyph name is case-significant — names like
-  `A.alt` and `A.Alt` will produce the same file name. Always rely on
+  Two known limitations apply: (1) some file systems impose file name length
+  restrictions, which can cause file name clashes; (2) the algorithm's
+  assumption that only the first character is case-significant means that glyph
+  names like `A.alt` and `A.Alt` produce the same file name. Always rely on
   `contents.plist` as the authoritative name-to-file mapping rather than
   reconstructing file names algorithmically.
 </Warning>

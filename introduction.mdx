@@ -1,5 +1,5 @@
 ---
-title: "UFO: The Unified Font Object Specification"
+title: "UFO: The Unified Font Object — Format Specification"
 sidebarTitle: "Introduction"
 description: "UFO is a cross-platform, human-readable, application-independent format for storing font data, used by font editors, libraries, and scripts."
 ---
@@ -10,7 +10,7 @@ The Unified Font Object (UFO) is a cross-platform, cross-application, human-read
 
 Every decision in the UFO specification follows three guiding principles:
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Human Readable & Editable" icon="file-lines">
     All UFO data is stored as plain text — XML property lists, OpenType feature files, and GLIF outlines — so it can be inspected and edited without specialized tools.
   </Card>
@@ -19,9 +19,6 @@ Every decision in the UFO specification follows three guiding principles:
   </Card>
   <Card title="No Unnecessary Duplication" icon="copy">
     Data is stored in exactly one place unless duplication is strictly necessary, keeping the format lean and reducing the risk of inconsistencies.
-  </Card>
-  <Card title="Future Proof" icon="clock-rotate-left">
-    The specification is versioned and publicly maintained. Older UFO files remain readable as the spec evolves, and new versions add capabilities without breaking existing data.
   </Card>
 </CardGroup>
 

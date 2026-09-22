@@ -1,7 +1,7 @@
 ---
-title: "Images Directory: PNG Images Referenced by Glyphs"
+title: "UFO Images Directory: PNG Files for Glyph References"
 sidebarTitle: "Images"
-description: "The images directory stores PNG files that can be referenced by glyphs via the GLIF image element, enabling sketch or reference artwork inside a UFO package."
+description: "The images directory stores PNG files referenced by glyphs via the GLIF image element, providing sketch or reference artwork inside a UFO 3 package."
 ---
 
 The `images` directory holds image files that individual glyphs can reference as visual overlays or sketches. Every file placed here must be a PNG — the UFO specification does not support any other image format in this location. When a glyph's GLIF file contains an `<image>` element, its `fileName` attribute points directly to a file in this directory by name only, not by a relative or absolute path.
@@ -56,7 +56,7 @@ Glyphs reference images through the `<image>` element inside a `.glif` file. Thi
 </ParamField>
 
 <ParamField path="color" type="string">
-  An optional color to apply to the image, expressed as a comma-separated `r,g,b,a` string (e.g. `1,0,0,0.5`). When present, this value takes precedence over any color defined on the layer.
+  An optional color to apply to the image, expressed as a comma-separated `r,g,b,a` string (e.g. `1,0,0,0.5`). When present, this value always takes precedence over any other color source.
 </ParamField>
 
 The six numeric transform attributes — `xScale`, `xyScale`, `yxScale`, `yScale`, `xOffset`, `yOffset` — form an Affine transformation matrix applied to the image. The default matrix `[1 0 0 1 0 0]` is the identity transformation. One image width unit equals one horizontal font unit and one image height unit equals one vertical font unit *before* the transformation is applied.
@@ -86,10 +86,4 @@ Color can be applied to an image at two levels, resolved in this priority order:
 
 When a color is applied, the authoring tool should convert the image to grayscale and then tint it with the specified color. The modified, colorized version of the image **must not** be written back into the `images` directory — only the original PNG is stored there.
 
-## Missing Images
 
-The specification describes what authoring tools must do with a valid `<image>` element: look up `fileName` in the `images` directory. If the referenced file is not present, the image simply cannot be displayed. The glyph itself remains valid; the missing image is treated as absent rather than as a hard error.
-
-<Warning>
-Referencing an image file that does not exist in the `images` directory will cause authoring tools to silently skip the image. Keep image files and GLIF references in sync to avoid invisible references accumulating in a UFO package.
-</Warning>

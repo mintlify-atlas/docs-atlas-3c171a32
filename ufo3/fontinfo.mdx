@@ -511,6 +511,20 @@ These keys apply to Type 1 and CFF (PostScript-based) font output.
 
 ---
 
+## Macintosh FOND Resource Data
+
+These keys support legacy Macintosh FOND resource data.
+
+<ParamField path="macintoshFONDFamilyID" type="integer">
+  Family ID number. Corresponds to the `ffFamID` in the FOND resource.
+</ParamField>
+
+<ParamField path="macintoshFONDName" type="string">
+  Font name for the FOND resource.
+</ParamField>
+
+---
+
 ## WOFF Data
 
 Many WOFF fields can be populated from generic elements, but since WOFF is a wrapper format they may not always be duplicated. All WOFF fields are optional.

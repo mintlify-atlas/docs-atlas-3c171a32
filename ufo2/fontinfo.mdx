@@ -1,5 +1,5 @@
 ---
-title: "UFO 2 fontinfo.plist: Font Metadata Specification"
+title: "UFO 2 fontinfo.plist: Complete Font Metadata Reference"
 sidebarTitle: "fontinfo.plist"
 description: "Complete UFO 2 fontinfo.plist reference — redesigned key structure covering identification, legal, dimensions, OpenType tables, PostScript, and FOND data."
 ---
@@ -203,7 +203,7 @@ These keys correspond to name IDs in the OpenType `name` table.
 </ParamField>
 
 <Info>
-  Several name IDs are derived from generic keys: name ID 0 (`copyright`), name ID 1 (`styleMapFamilyName`), name ID 2 (derived from `styleMapStyleName`), name ID 6 (`postscriptFontName`), name ID 7 (`trademark`). Compilers should follow the OpenType name table specification for building the complete name table.
+  Several name IDs are derived from generic keys: name ID 0 (`copyright`), name ID 1 (`styleMapFamilyName`), name ID 2 (derived from `styleMapStyleName`), name ID 4 (full font name, created from `styleMapFamilyName` and `styleMapStyleName`), name ID 6 (`postscriptFontName`), name ID 7 (`trademark`). Compilers should follow the OpenType name table specification for building the complete name table.
 </Info>
 
 ## OpenType OS/2 Table Fields
@@ -307,7 +307,7 @@ These keys correspond to fields in the OpenType `OS/2` table.
 </ParamField>
 
 <Info>
-  The following `OS/2` fields are calculated or set by the compiler: `xAvgCharWidth`, `fsSelection` (from `styleMapStyleName`), `usFirstCharIndex`, `usLastCharIndex`, `sxHeight` (from `xHeight`), `sCapHeight` (from `capHeight`), `usDefaultChar`, `usBreakChar`, and `usMaxContext`.
+  The following `OS/2` fields are calculated or set by the compiler: `xAvgCharWidth`, `fsSelection` (from `styleMapStyleName`), `usFirstCharIndex`, `usLastCharIndex`, `sxHeight` (from `xHeight`), `sCapHeight` (from `capHeight`), `usDefaultChar`, `usBreakChar`, and `usMaxContext`. Note: `sFamilyClass` is not supported for direct compiler output despite the `openTypeOS2FamilyClass` key being present in the spec.
 </Info>
 
 ## OpenType vhea Table Fields
@@ -337,6 +337,10 @@ These keys correspond to fields in the OpenType `vhea` (vertical header) table.
 <ParamField body="openTypeVheaCaretOffset" type="integer or float">
   Caret offset value. Corresponds to the `vhea` table `caretOffset` field.
 </ParamField>
+
+<Info>
+  The following `vhea` fields are calculated or set by the compiler: `advanceHeightMax`, `minTopSideBearing`, `minBottomSideBearing`, `yMaxExtent`, `metricDataFormat`, and `numberOfHMetrics`.
+</Info>
 
 ## PostScript Specific Data
 
